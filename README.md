@@ -1,4 +1,4 @@
-# [INSIRA O NOME DO APP AQUI]
+# Não Esquece!
 
 Aplicativo Flutter para criar, salvar, atualizar, compartilhar e consultar o histórico de listas de compras. Este repositório contém o código-fonte do projeto desenvolvido por Paulo.
 
