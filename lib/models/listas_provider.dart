@@ -1,10 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:lista_compras/services/hive_service.dart';
 import 'lista_compras.dart';
+import 'item.dart';
 
 class ListasProvider with ChangeNotifier {
-  final List<ListaCompras> _listas = [];
+  List<ListaCompras> _listas = [];
+  bool _isLoading = false;
 
   List<ListaCompras> get listas => _listas;
+  bool get isLoading => _isLoading;
+
+  List<ListaCompras> get listasAtivas =>
+      _listas.where((l) => !l.finalizada).toList();
+  List<ListaCompras> get listasFinalizadas =>
+      _listas.where((l) => l.finalizada).toList();
+
+  ListasProvider() {
+    carregarListas();
+  }
+
+  Future<void> carregarListas() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      _listas = HiveService.obterTodasListasCompras();
+      // Ordena por data de criação (mais recentes primeiro)
+      _listas.sort((a, b) => b.dataCriacao.compareTo(a.dataCriacao));
+    } catch (e) {
+      debugPrint('Erro ao carregar listas: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
   ListaCompras? getListaPorId(String id) {
     try {
@@ -14,10 +42,49 @@ class ListasProvider with ChangeNotifier {
     }
   }
 
-  void adicionarLista(ListaCompras lista) {
-    _listas.add(lista);
+  Future<void> adicionarLista(ListaCompras lista) async {
+    await HiveService.salvarListaCompras(lista);
+    // Recarrega tudo para garantir ordem e consistência
+    await carregarListas(); 
+  }
+
+  Future<void> atualizarLista(ListaCompras lista) async {
+    // Como ListaCompras estende HiveObject, se ela já estiver no box,
+    // .save() funciona. Mas se modificamos propriedades fora do método .save(),
+    // precisamos garantir a persistência.
+    // O método abaixo garante que o objeto seja salvo no box correto.
+    await HiveService.salvarListaCompras(lista);
     notifyListeners();
   }
 
-  // Outros métodos para remover/atualizar listas...
+  Future<void> removerLista(String id) async {
+    await HiveService.excluirListaCompras(id);
+    await carregarListas();
+  }
+  
+  // Métodos wrapper para manipulação de itens que garantem notificação da UI
+  Future<void> adicionarItem(ListaCompras lista, Item item) async {
+    lista.adicionarItem(item); // Já chama save() se estiver no box
+    notifyListeners();
+  }
+  
+  Future<void> atualizarItem(ListaCompras lista, Item item) async {
+    lista.atualizarItem(item); // Já chama save() se estiver no box
+    notifyListeners();
+  }
+
+  Future<void> removerItem(ListaCompras lista, Item item) async {
+    lista.removerItem(item); // Já chama save() se estiver no box
+    notifyListeners();
+  }
+  
+  Future<void> alternarStatusItem(ListaCompras lista, Item item) async {
+      final novoStatus = !item.comprado;
+      final itemAtualizado = item.copyWith(
+          comprado: novoStatus,
+          dataCompra: novoStatus ? DateTime.now() : null,
+      );
+      lista.atualizarItem(itemAtualizado);
+      notifyListeners();
+  }
 }
