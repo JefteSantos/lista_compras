@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:flutter/services.dart';
 import '../models/lista_compras.dart';
 import '../models/item.dart';
 import '../services/hive_service.dart';
-import '../services/share_service.dart';
 import '../screens/edit_item_screen.dart';
 import '../screens/confirmation_dialog.dart';
 
@@ -100,7 +101,7 @@ class _HiveExampleState extends State<HiveExample> {
   }
 
   void _excluirItem(ListaCompras lista, Item item) async {
-    final bool deleted = await handleDeleteItem(context, item.nome, item.id);
+    final bool deleted = await handleDeleteItem(item.nome, item.id);
 
     if (deleted) {
       lista.itens.removeWhere((i) => i.id == item.id);
@@ -109,88 +110,9 @@ class _HiveExampleState extends State<HiveExample> {
     }
   }
 
-  void _compartilharLista(ListaCompras lista) async {
-    try {
-      await ShareService.compartilharLista(lista);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Lista copiada para a área de transferência!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao compartilhar: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  void _editarNomeLista(ListaCompras lista) async {
-    final nomeController = TextEditingController(text: lista.nome);
-    final descController = TextEditingController(text: lista.descricao ?? '');
-
-    final resultado = await showDialog<Map<String, String>>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Editar Lista'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nomeController,
-              decoration: const InputDecoration(
-                labelText: 'Nome da lista',
-                border: OutlineInputBorder(),
-              ),
-              autofocus: true,
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: descController,
-              decoration: const InputDecoration(
-                labelText: 'Descrição da lista',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop({
-              'nome': nomeController.text.trim(),
-              'descricao': descController.text.trim(),
-            }),
-            child: const Text('Salvar'),
-          ),
-        ],
-      ),
-    );
-
-    if (resultado != null && resultado['nome']?.isNotEmpty == true) {
-      lista.nome = resultado['nome']!;
-      lista.descricao = resultado['descricao']?.isEmpty == true
-          ? null
-          : resultado['descricao'];
-      HiveService.salvarListaCompras(lista);
-      _carregarListas();
-    }
-  }
-
   void _excluirLista(ListaCompras lista) async {
     // Recebe o status da exclusão (true se foi excluída, false se cancelada)
-    final bool deleted = await handleDeleteList(context, lista.nome, lista.id);
+    final bool deleted = await handleDeleteList(lista.nome, lista.id);
 
     // Só recarrega as listas se o item foi realmente deletado.
     if (deleted) {
@@ -198,27 +120,56 @@ class _HiveExampleState extends State<HiveExample> {
     }
   }
 
-  Future<bool> handleDeleteList(
-    BuildContext context,
-    String listName,
-    String listId,
-  ) async {
-    // 1. Chama o diálogo com a mensagem específica
+  void _editarNomeLista(ListaCompras lista) async {
+    final controller = TextEditingController(text: lista.nome);
+
+    final String? novoNome = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Editar nome da lista'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(labelText: 'Nome'),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(null),
+            child: const Text('CANCELAR'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+            child: const Text('SALVAR'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (novoNome != null && novoNome.isNotEmpty && novoNome != lista.nome) {
+      lista.nome = novoNome;
+      HiveService.salvarListaCompras(lista);
+      _carregarListas();
+    }
+  }
+
+  Future<bool> handleDeleteList(String listName, String listId) async {
+    // Chama o diálogo — usamos o State.context aqui.
     final bool confirmed = await showGenericConfirmationDialog(
       context,
       title: 'Excluir Lista Permanentemente',
       content:
           'Tem certeza que deseja excluir a lista "$listName"? Esta ação não pode ser desfeita.',
       confirmText: 'EXCLUIR',
-      confirmColor: Colors.red, // Usa vermelho para a ação de exclusão
+      confirmColor: Colors.red,
     );
 
+    // Protege o uso do State.context após await
     if (!mounted) return false;
 
-    // 2. Trata o resultado
     if (confirmed) {
       HiveService.excluirListaCompras(listId);
-      // Lógica para excluir a lista no seu banco de dados ou estado.
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Lista "$listName" excluída.')));
@@ -228,11 +179,7 @@ class _HiveExampleState extends State<HiveExample> {
     }
   }
 
-  Future<bool> handleDeleteItem(
-    BuildContext context,
-    String itemName,
-    String itemId,
-  ) async {
+  Future<bool> handleDeleteItem(String itemName, String itemId) async {
     final bool confirmed = await showGenericConfirmationDialog(
       context,
       title: 'Excluir item Permanentemente',
@@ -242,6 +189,7 @@ class _HiveExampleState extends State<HiveExample> {
       confirmColor: Colors.red,
     );
 
+    // Protege o uso do State.context após await
     if (!mounted) return false;
 
     if (confirmed) {
@@ -252,6 +200,54 @@ class _HiveExampleState extends State<HiveExample> {
     } else {
       return false;
     }
+  }
+
+  void _compartilharLista(ListaCompras lista) async {
+    final buffer = StringBuffer();
+    buffer.writeln(lista.nome);
+    if (lista.descricao != null) buffer.writeln(lista.descricao);
+    buffer.writeln('');
+
+    for (final item in lista.itens) {
+      final statusEmoji = item.comprado ? '✅' : '❌';
+      buffer.writeln(
+        '$statusEmoji - ${item.quantidade} x ${item.nome}${item.preco != null ? ' - R\$ ${item.precoTotal.toStringAsFixed(2)}' : ''}',
+      );
+    }
+
+    final total = lista.precoTotal;
+    final comprado = lista.precoComprado;
+    final faltando = (total - comprado).clamp(0, double.infinity);
+
+    buffer.writeln('');
+    buffer.writeln('✅ - Valor comprado: R\$ ${comprado.toStringAsFixed(2)}');
+    buffer.writeln('❌ - Valor faltando: R\$ ${faltando.toStringAsFixed(2)}');
+    buffer.writeln('💰 - Total: R\$ ${total.toStringAsFixed(2)}');
+
+    // obtenha info do app (nome/versão) — usa package_info_plus
+    String appName = 'Lista de Compras';
+    try {
+      final pkg = await PackageInfo.fromPlatform();
+      appName = pkg.appName.isNotEmpty ? pkg.appName : appName;
+      final version = pkg.version;
+      buffer.writeln('');
+      buffer.writeln(
+        'Compartilhado via $appName${version.isNotEmpty ? ' v$version' : ''}',
+      );
+    } catch (_) {
+      buffer.writeln('');
+      buffer.writeln('Compartilhado via $appName');
+    }
+
+    // copia para a área de transferência
+    await Clipboard.setData(ClipboardData(text: buffer.toString()));
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Texto copiado para a área de transferência'),
+      ),
+    );
   }
 
   @override
@@ -424,73 +420,104 @@ class _HiveExampleState extends State<HiveExample> {
                                       ),
                                     )
                                   else
-                                    ...lista.itens.map(
-                                      (item) => ListTile(
-                                        title: Text(
-                                          item.nome,
-                                          style: TextStyle(
-                                            decoration: item.comprado
-                                                ? TextDecoration.lineThrough
-                                                : TextDecoration.none,
-                                            color: item.comprado
-                                                ? Colors.grey
-                                                : Colors.black,
-                                          ),
-                                        ),
-                                        subtitle: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Qtd: ${item.quantidade}${item.preco != null ? ' - R\$ ${item.precoTotal.toStringAsFixed(2)}' : ''}',
-                                            ),
-                                            if (item.observacoes != null &&
-                                                item.observacoes!.isNotEmpty)
-                                              Text(
-                                                'Obs: ${item.observacoes}',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey.shade600,
-                                                  fontStyle: FontStyle.italic,
+                                    // Ordena itens: não comprados primeiro, comprados por último
+                                    ...(() {
+                                      final sorted = [...lista.itens];
+                                      sorted.sort((a, b) {
+                                        if (a.comprado == b.comprado) return 0;
+                                        return a.comprado ? 1 : -1;
+                                      });
+                                      return sorted
+                                          .map(
+                                            (item) => ListTile(
+                                              leading: Text(
+                                                item.comprado ? '✅' : '❌',
+                                                style: const TextStyle(
+                                                  fontSize: 20,
                                                 ),
                                               ),
-                                          ],
-                                        ),
-                                        trailing: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            IconButton(
-                                              icon: const Icon(
-                                                Icons.edit,
-                                                size: 20,
+                                              title: Text(
+                                                item.nome,
+                                                style: TextStyle(
+                                                  decoration: item.comprado
+                                                      ? TextDecoration
+                                                            .lineThrough
+                                                      : TextDecoration.none,
+                                                  color: item.comprado
+                                                      ? Colors.grey
+                                                      : Colors.black,
+                                                ),
                                               ),
-                                              onPressed: () =>
-                                                  _editarItem(lista, item),
-                                              tooltip: 'Editar item',
-                                            ),
-                                            IconButton(
-                                              icon: const Icon(
-                                                Icons.delete,
-                                                size: 20,
-                                              ),
-                                              onPressed: () =>
-                                                  _excluirItem(lista, item),
-                                              tooltip: 'Excluir item',
-                                            ),
-                                            Checkbox(
-                                              value: item.comprado,
-                                              onChanged: (value) =>
-                                                  _alternarStatusItem(
-                                                    lista,
-                                                    item,
+                                              subtitle: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Qtd: ${item.quantidade}${item.preco != null ? ' - R\$ ${item.precoTotal.toStringAsFixed(2)}' : ''}',
                                                   ),
+                                                  if (item.observacoes !=
+                                                          null &&
+                                                      item
+                                                          .observacoes!
+                                                          .isNotEmpty)
+                                                    Text(
+                                                      'Obs: ${item.observacoes}',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors
+                                                            .grey
+                                                            .shade600,
+                                                        fontStyle:
+                                                            FontStyle.italic,
+                                                      ),
+                                                    ),
+                                                ],
+                                              ),
+                                              trailing: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.edit,
+                                                      size: 20,
+                                                    ),
+                                                    onPressed: () =>
+                                                        _editarItem(
+                                                          lista,
+                                                          item,
+                                                        ),
+                                                    tooltip: 'Editar item',
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                      Icons.delete,
+                                                      size: 20,
+                                                    ),
+                                                    onPressed: () =>
+                                                        _excluirItem(
+                                                          lista,
+                                                          item,
+                                                        ),
+                                                    tooltip: 'Excluir item',
+                                                  ),
+                                                  Checkbox(
+                                                    value: item.comprado,
+                                                    onChanged: (value) =>
+                                                        _alternarStatusItem(
+                                                          lista,
+                                                          item,
+                                                        ),
+                                                  ),
+                                                ],
+                                              ),
+                                              onTap: () => _alternarStatusItem(
+                                                lista,
+                                                item,
+                                              ),
                                             ),
-                                          ],
-                                        ),
-                                        onTap: () =>
-                                            _alternarStatusItem(lista, item),
-                                      ),
-                                    ),
+                                          )
+                                          .toList();
+                                    }()),
                                   const SizedBox(height: 8),
                                   Row(
                                     mainAxisAlignment:

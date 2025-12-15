@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'confirmation_dialog.dart';
 import '../models/item.dart';
 import 'package:lista_compras/models/listas_provider.dart';
+import 'package:lista_compras/utils/app_utils.dart';
+import 'package:intl/intl.dart';
 
 class EditItemScreen extends StatefulWidget {
   final Item? item;
@@ -33,7 +35,9 @@ class _EditItemScreenState extends State<EditItemScreen> {
       text: widget.item?.quantidade.toString() ?? '1',
     );
     _precoController = TextEditingController(
-      text: widget.item?.preco?.toString() ?? '',
+      text: widget.item?.preco != null 
+          ? NumberFormat.simpleCurrency(locale: 'pt_BR', name: '').format(widget.item!.preco).trim()
+          : '',
     );
     _observacoesController = TextEditingController(
       text: widget.item?.observacoes ?? '',
@@ -86,7 +90,11 @@ class _EditItemScreenState extends State<EditItemScreen> {
     // ----------------------------------------------------------------------------------
 
     final quantidade = int.tryParse(_quantidadeController.text) ?? 1;
-    final preco = double.tryParse(_precoController.text);
+    
+    // Parse currency allowing comma as decimal separator. 
+    // This supports "10,50" -> "10.50" and "10.50" -> "10.50".
+    String precoText = _precoController.text.replaceAll(',', '.');
+    final preco = double.tryParse(precoText);
 
     final item = Item(
       id: widget.item?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
@@ -152,7 +160,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
                     controller: _precoController,
                     decoration: const InputDecoration(
                       labelText: 'Preço (opcional)',
-                      hintText: 'Ex: 4.50',
+                      hintText: 'Ex: 4,50',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.attach_money),
                       prefixText: 'R\$ ',
@@ -161,7 +169,8 @@ class _EditItemScreenState extends State<EditItemScreen> {
                       decimal: true,
                     ),
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                      // Allow digits and one comma or dot
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
                     ],
                   ),
                 ),
@@ -214,7 +223,15 @@ class _EditItemScreenState extends State<EditItemScreen> {
                       Text(
                         _precoController.text.isEmpty
                             ? 'Preço não informado'
-                            : 'R\$ ${_precoController.text}',
+                            : (() {
+                                try {
+                                  String clean = _precoController.text.replaceAll('.', '').replaceAll(',', '.');
+                                  double? val = double.tryParse(clean);
+                                  return val != null ? AppUtils.formatMoney(val) : 'R\$ ${_precoController.text}';
+                                } catch (e) {
+                                  return 'R\$ ${_precoController.text}';
+                                }
+                              })(),
                       ),
                     ],
                   ),
