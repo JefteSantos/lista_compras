@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:lista_compras/models/listas_provider.dart';
 import 'package:lista_compras/models/lista_compras.dart';
 import 'package:lista_compras/screens/list_detail_screen.dart';
+import 'package:lista_compras/screens/report_screen.dart';
 import 'package:lista_compras/utils/app_utils.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -12,7 +13,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -65,12 +67,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         nome: nome,
         dataCriacao: DateTime.now(),
       );
-      
-      await Provider.of<ListasProvider>(context, listen: false)
-          .adicionarLista(novaLista);
+
+      await Provider.of<ListasProvider>(
+        context,
+        listen: false,
+      ).adicionarLista(novaLista);
 
       if (mounted) {
-         Navigator.of(context).push(
+        Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => ListDetailScreen(listaId: novaLista.id),
           ),
@@ -84,6 +88,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     return Scaffold(
       appBar: AppBar(
         title: const Text('Minhas Listas'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bar_chart),
+            tooltip: 'Relatórios',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const ReportScreen()),
+              );
+            },
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -97,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           if (provider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          
+
           return TabBarView(
             controller: _tabController,
             children: [
@@ -128,8 +143,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ),
             const SizedBox(height: 16),
             Text(
-              isAtivas 
-                  ? 'Nenhuma lista ativa no momento.' 
+              isAtivas
+                  ? 'Nenhuma lista ativa no momento.'
                   : 'Nenhum histórico disponível.',
               style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
             ),
@@ -187,7 +202,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                  const Icon(
+                    Icons.calendar_today,
+                    size: 14,
+                    color: Colors.grey,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     _formatDate(lista.dataCriacao),
@@ -206,18 +225,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
               const SizedBox(height: 8),
               LinearProgressIndicator(
-                value: lista.totalItens == 0 ? 0 : lista.itensComprados / lista.totalItens,
+                value: lista.totalItens == 0
+                    ? 0
+                    : lista.itensComprados / lista.totalItens,
                 backgroundColor: Colors.grey.shade200,
                 color: lista.finalizada ? Colors.green : Colors.blue,
                 borderRadius: BorderRadius.circular(2),
               ),
               if (lista.precoTotal > 0) ...[
-                 const SizedBox(height: 8),
-                 Text(
-                   'Total estimado: ${AppUtils.formatMoney(lista.precoTotal)}',
-                   style: const TextStyle(fontWeight: FontWeight.w600),
-                 )
-              ]
+                const SizedBox(height: 8),
+                Text(
+                  'Total estimado: ${AppUtils.formatMoney(lista.precoTotal)}',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ],
             ],
           ),
         ),
@@ -235,7 +256,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       child: Text(
         lista.finalizada ? 'Concluída' : 'Em andamento',
         style: TextStyle(
-          color: lista.finalizada ? Colors.green.shade800 : Colors.blue.shade800,
+          color: lista.finalizada
+              ? Colors.green.shade800
+              : Colors.blue.shade800,
           fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
