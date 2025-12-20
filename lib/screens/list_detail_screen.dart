@@ -223,7 +223,7 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                         ),
                       )
                     : ListView.separated(
-                        padding: const EdgeInsets.only(bottom: 80),
+                        padding: const EdgeInsets.only(bottom: 100),
                         itemCount: itensOrdenados.length,
                         separatorBuilder: (_, i) => const Divider(height: 1),
                         itemBuilder: (context, index) {
@@ -236,17 +236,23 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
           ),
           bottomNavigationBar: BottomAppBar(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+                vertical: 8.0,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Total: ${AppUtils.formatMoney(lista.precoTotal)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                  Expanded(
+                    child: Text(
+                      'Total: ${AppUtils.formatMoney(lista.precoTotal)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 8),
                   ElevatedButton.icon(
                     onPressed: () {
                       lista.finalizada = !lista.finalizada;
@@ -280,8 +286,7 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
             onPressed: () => _adicionarOuEditarItem(context, lista),
             child: const Icon(Icons.add),
           ),
-          floatingActionButtonLocation:
-              FloatingActionButtonLocation.endContained,
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         );
       },
     );
