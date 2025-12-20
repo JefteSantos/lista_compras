@@ -176,7 +176,7 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                     );
                     if (confirmed && context.mounted) {
                       await provider.removerLista(lista.id);
-                      if (mounted) {
+                      if (context.mounted) {
                         Navigator.pop(context);
                       }
                     }
@@ -225,7 +225,7 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                     : ListView.separated(
                         padding: const EdgeInsets.only(bottom: 80),
                         itemCount: itensOrdenados.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        separatorBuilder: (_, i) => const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final item = itensOrdenados[index];
                           return _buildItemTile(context, provider, lista, item);

@@ -19,7 +19,7 @@ enum FiltroLista { ativas, finalizadas, todas }
 class _HiveExampleState extends State<HiveExample> {
   List<ListaCompras> _listas = [];
   FiltroLista _filtroSelecionado =
-      FiltroLista.ativas; // Começa mostrando ativas
+      FiltroLista.ativas;
 
   @override
   void initState() {
@@ -111,10 +111,7 @@ class _HiveExampleState extends State<HiveExample> {
   }
 
   void _excluirLista(ListaCompras lista) async {
-    // Recebe o status da exclusão (true se foi excluída, false se cancelada)
     final bool deleted = await handleDeleteList(lista.nome, lista.id);
-
-    // Só recarrega as listas se o item foi realmente deletado.
     if (deleted) {
       _carregarListas();
     }
