@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../models/listas_provider.dart';
 import '../models/lista_compras.dart';
-import '../models/item.dart';
 import '../utils/app_utils.dart';
 import '../services/export_service.dart';
 
@@ -19,14 +18,11 @@ class _ReportScreenState extends State<ReportScreen> {
   bool _showItems = false;
   String _searchQuery = '';
 
-  // Cache filtrado
   List<ListaCompras> _filteredList = [];
 
   @override
   void initState() {
     super.initState();
-    // Inicia com o mês atual por padrão, ou sem filtro se preferir
-    // Vamos deixar sem filtro de data inicial para mostrar tudo
   }
 
   void _updateFilter() {
@@ -35,12 +31,9 @@ class _ReportScreenState extends State<ReportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Acessa o provider
     final allListas = Provider.of<ListasProvider>(context).listas;
 
-    // Aplica filtros
     _filteredList = allListas.where((lista) {
-      // Filtro de Data
       if (_selectedDateRange != null) {
         if (lista.dataCriacao.isBefore(_selectedDateRange!.start) ||
             lista.dataCriacao.isAfter(
@@ -50,7 +43,6 @@ class _ReportScreenState extends State<ReportScreen> {
         }
       }
 
-      // Filtro de Busca (Nome da lista OU Nome de algum item)
       if (_searchQuery.isNotEmpty) {
         final query = _searchQuery.toLowerCase();
         final matchesListName = lista.nome.toLowerCase().contains(query);
@@ -66,10 +58,8 @@ class _ReportScreenState extends State<ReportScreen> {
       return true;
     }).toList();
 
-    // Ordenar por data (mais recente primeiro)
     _filteredList.sort((a, b) => b.dataCriacao.compareTo(a.dataCriacao));
 
-    // Cálculos de Totais Gerais
     double totalGeralComprado = 0;
     double totalGeralAberto = 0;
     double totalGeral = 0;
@@ -129,7 +119,6 @@ class _ReportScreenState extends State<ReportScreen> {
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
-            // Linha 1: Busca e Toggle de Itens
             Row(
               children: [
                 Expanded(
@@ -167,7 +156,6 @@ class _ReportScreenState extends State<ReportScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            // Linha 2: Filtro de Data
             InkWell(
               onTap: _pickDateRange,
               borderRadius: BorderRadius.circular(4),
@@ -219,7 +207,6 @@ class _ReportScreenState extends State<ReportScreen> {
       elevation: 1,
       child: Column(
         children: [
-          // Cabeçalho da Lista (Resumo)
           ListTile(
             title: Text(
               lista.nome,
@@ -247,7 +234,6 @@ class _ReportScreenState extends State<ReportScreen> {
             ),
           ),
 
-          // Se expandido, mostra tabela de itens
           if (_showItems && lista.itens.isNotEmpty)
             Container(
               color: Colors.grey.shade50,
@@ -265,7 +251,6 @@ class _ReportScreenState extends State<ReportScreen> {
                       ),
                     ),
                   ),
-                  // Header
                   Container(
                     decoration: const BoxDecoration(color: Colors.deepPurple),
                     padding: const EdgeInsets.all(4),
@@ -309,7 +294,6 @@ class _ReportScreenState extends State<ReportScreen> {
                       ],
                     ),
                   ),
-                  // Items
                   ...lista.itens.map((item) {
                     return Container(
                       decoration: BoxDecoration(
@@ -367,12 +351,11 @@ class _ReportScreenState extends State<ReportScreen> {
                         ],
                       ),
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),
 
-          // Rodapé do Card com resumo financeiro mais detalhado
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
@@ -413,7 +396,6 @@ class _ReportScreenState extends State<ReportScreen> {
     );
   }
 
-  // Footer fixo com totais gerais
   Widget _buildFooterTotals(double comprado, double aberto, double total) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -421,7 +403,7 @@ class _ReportScreenState extends State<ReportScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),

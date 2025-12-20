@@ -123,6 +123,7 @@ class _HomeScreenState extends State<HomeScreen>
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
+        key: const Key('fabNovaLista'),
         onPressed: _criarNovaLista,
         icon: const Icon(Icons.add),
         label: const Text('Nova Lista'),

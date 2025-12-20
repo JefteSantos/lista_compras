@@ -1,30 +1,67 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:lista_compras/main.dart';
+import 'package:provider/provider.dart';
+import 'package:lista_compras/models/listas_provider.dart';
+import 'package:lista_compras/screens/home_screen.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('HomeScreen Widget Tests', () {
+    testWidgets('deve exibir título corretamente', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ChangeNotifierProvider(
+            create: (_) => ListasProvider(),
+            child: const HomeScreen(),
+          ),
+        ),
+      );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+      expect(find.text('Minhas Listas'), findsOneWidget);
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    testWidgets('deve exibir tabs Ativas e Histórico', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ChangeNotifierProvider(
+            create: (_) => ListasProvider(),
+            child: const HomeScreen(),
+          ),
+        ),
+      );
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+      expect(find.text('Ativas'), findsOneWidget);
+      expect(find.text('Histórico'), findsOneWidget);
+    });
+
+    testWidgets('deve exibir FAB para adicionar lista', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ChangeNotifierProvider(
+            create: (_) => ListasProvider(),
+            child: const HomeScreen(),
+          ),
+        ),
+      );
+
+      expect(find.byType(FloatingActionButton), findsOneWidget);
+      expect(find.byIcon(Icons.add), findsOneWidget);
+    });
+
+    testWidgets('deve exibir botão de relatórios', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ChangeNotifierProvider(
+            create: (_) => ListasProvider(),
+            child: const HomeScreen(),
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.bar_chart), findsOneWidget);
+    });
   });
 }

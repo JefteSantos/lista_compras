@@ -17,15 +17,14 @@ import '../utils/app_utils.dart';
 class ExportService {
   static int _exportCounter = 0;
 
-  // Generate unique filename with app name, date, time and counter
-  // Format: NaoEsquece_Relatorio_AAAAMMDD_HHmm_N.extension
   static String _generateFileName(String extension) {
     final now = DateTime.now();
     final dateStr = DateFormat('yyyyMMdd_HHmm').format(now);
     _exportCounter++;
 
-    // Reset counter if it gets too high (unlikely but safe)
-    if (_exportCounter > 9999) _exportCounter = 1;
+    if (_exportCounter > 9999) {
+      _exportCounter = 1;
+    }
 
     return 'NaoEsquece_Relatorio_${dateStr}_$_exportCounter.$extension';
   }
@@ -156,14 +155,14 @@ class ExportService {
                                   ],
                                 ),
                               );
-                            }).toList(),
+                            }),
                           ],
                         ),
                       ),
                   ],
                 ),
               );
-            }).toList(),
+            }),
 
             pw.Divider(),
             pw.Row(
@@ -182,7 +181,6 @@ class ExportService {
         ),
       );
 
-      // Usa printing para visualizar/compartilhar/salvar (funciona Web/Mobile)
       await Printing.layoutPdf(
         onLayout: (PdfPageFormat format) async => pdf.save(),
         name: _generateFileName('pdf'),
@@ -205,7 +203,6 @@ class ExportService {
     try {
       List<List<dynamic>> rows = [];
 
-      // Header
       List<dynamic> header = [
         "Data Criacao",
         "Nome Lista",
@@ -222,7 +219,6 @@ class ExportService {
 
       for (var lista in listas) {
         if (!includeItems || lista.itens.isEmpty) {
-          // Lista resumo (sem itens ou lista vazia)
           List<dynamic> row = [
             DateFormat('dd/MM/yyyy').format(lista.dataCriacao),
             lista.nome,
@@ -257,17 +253,16 @@ class ExportService {
       final fileName = _generateFileName('csv');
 
       if (kIsWeb) {
-        // Download Web - Add UTF-8 BOM for Excel compatibility
         final bom = [0xEF, 0xBB, 0xBF];
         final bytes = bom + utf8.encode(csvData);
         final blob = html.Blob([bytes]);
         final url = html.Url.createObjectUrlFromBlob(blob);
+        // ignore: unused_local_variable
         final anchor = html.AnchorElement(href: url)
           ..setAttribute("download", fileName)
           ..click();
         html.Url.revokeObjectUrl(url);
       } else {
-        // Mobile - Add UTF-8 BOM for Excel compatibility
         final directory = await getApplicationDocumentsDirectory();
         final path = "${directory.path}/$fileName";
         final file = File(path);
@@ -373,6 +368,7 @@ class ExportService {
         if (kIsWeb) {
           final blob = html.Blob([fileBytes]);
           final url = html.Url.createObjectUrlFromBlob(blob);
+          // ignore: unused_local_variable
           final anchor = html.AnchorElement(href: url)
             ..setAttribute("download", fileName)
             ..click();
