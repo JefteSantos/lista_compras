@@ -24,7 +24,6 @@ class ListasProvider with ChangeNotifier {
     notifyListeners();
     try {
       _listas = HiveService.obterTodasListasCompras();
-      // Ordena por data de criação (mais recentes primeiro)
       _listas.sort((a, b) => b.dataCriacao.compareTo(a.dataCriacao));
     } catch (e) {
       debugPrint('Erro ao carregar listas: $e');
@@ -45,14 +44,10 @@ class ListasProvider with ChangeNotifier {
   Future<void> adicionarLista(ListaCompras lista) async {
     await HiveService.salvarListaCompras(lista);
     // Recarrega tudo para garantir ordem e consistência
-    await carregarListas(); 
+    await carregarListas();
   }
 
   Future<void> atualizarLista(ListaCompras lista) async {
-    // Como ListaCompras estende HiveObject, se ela já estiver no box,
-    // .save() funciona. Mas se modificamos propriedades fora do método .save(),
-    // precisamos garantir a persistência.
-    // O método abaixo garante que o objeto seja salvo no box correto.
     await HiveService.salvarListaCompras(lista);
     notifyListeners();
   }
@@ -61,30 +56,29 @@ class ListasProvider with ChangeNotifier {
     await HiveService.excluirListaCompras(id);
     await carregarListas();
   }
-  
-  // Métodos wrapper para manipulação de itens que garantem notificação da UI
+
   Future<void> adicionarItem(ListaCompras lista, Item item) async {
-    lista.adicionarItem(item); // Já chama save() se estiver no box
+    lista.adicionarItem(item);
     notifyListeners();
   }
-  
+
   Future<void> atualizarItem(ListaCompras lista, Item item) async {
-    lista.atualizarItem(item); // Já chama save() se estiver no box
+    lista.atualizarItem(item);
     notifyListeners();
   }
 
   Future<void> removerItem(ListaCompras lista, Item item) async {
-    lista.removerItem(item); // Já chama save() se estiver no box
+    lista.removerItem(item);
     notifyListeners();
   }
-  
+
   Future<void> alternarStatusItem(ListaCompras lista, Item item) async {
-      final novoStatus = !item.comprado;
-      final itemAtualizado = item.copyWith(
-          comprado: novoStatus,
-          dataCompra: novoStatus ? DateTime.now() : null,
-      );
-      lista.atualizarItem(itemAtualizado);
-      notifyListeners();
+    final novoStatus = !item.comprado;
+    final itemAtualizado = item.copyWith(
+      comprado: novoStatus,
+      dataCompra: novoStatus ? DateTime.now() : null,
+    );
+    lista.atualizarItem(itemAtualizado);
+    notifyListeners();
   }
 }
