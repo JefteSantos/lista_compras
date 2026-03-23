@@ -207,13 +207,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Icon(icon, size: 18, color: Colors.deepPurple),
           const SizedBox(width: 6),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: Colors.deepPurple.shade700,
-              letterSpacing: 0.3,
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.deepPurple.shade700,
+                letterSpacing: 0.3,
+              ),
             ),
           ),
         ],

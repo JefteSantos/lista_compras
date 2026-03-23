@@ -80,9 +80,17 @@ class DriveBackupService {
     }
 
     // Salva a data localmente para exibição rápida sem precisar consultar o Drive
+    final agora = DateTime.now();
     await HiveService.salvarConfiguracao(
       _chaveUltimoBackup,
-      DateTime.now().toIso8601String(),
+      agora.toIso8601String(),
+    );
+
+    final tamanhoKb = (compressed.length / 1024).toStringAsFixed(1);
+    debugPrint(
+      '[DriveBackup] Backup realizado — '
+      'Tamanho: ${tamanhoKb} KB | '
+      'Data: $agora',
     );
   }
 
