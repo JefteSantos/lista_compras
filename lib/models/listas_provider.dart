@@ -49,6 +49,9 @@ class ListasProvider with ChangeNotifier {
 
   Future<void> atualizarLista(ListaCompras lista) async {
     await HiveService.salvarListaCompras(lista);
+    // Bug 1 fix: sincroniza o objeto em memória para evitar estado defasado
+    final index = _listas.indexWhere((l) => l.id == lista.id);
+    if (index != -1) _listas[index] = lista;
     notifyListeners();
   }
 
@@ -59,16 +62,22 @@ class ListasProvider with ChangeNotifier {
 
   Future<void> adicionarItem(ListaCompras lista, Item item) async {
     lista.adicionarItem(item);
+    // Bug 2 fix: garante persistência explícita, independente de isInBox
+    await HiveService.salvarListaCompras(lista);
     notifyListeners();
   }
 
   Future<void> atualizarItem(ListaCompras lista, Item item) async {
     lista.atualizarItem(item);
+    // Bug 2 fix: garante persistência explícita, independente de isInBox
+    await HiveService.salvarListaCompras(lista);
     notifyListeners();
   }
 
   Future<void> removerItem(ListaCompras lista, Item item) async {
     lista.removerItem(item);
+    // Bug 2 fix: garante persistência explícita, independente de isInBox
+    await HiveService.salvarListaCompras(lista);
     notifyListeners();
   }
 
@@ -79,6 +88,8 @@ class ListasProvider with ChangeNotifier {
       dataCompra: novoStatus ? DateTime.now() : null,
     );
     lista.atualizarItem(itemAtualizado);
+    // Bug 2 fix: garante persistência explícita, independente de isInBox
+    await HiveService.salvarListaCompras(lista);
     notifyListeners();
   }
 }
