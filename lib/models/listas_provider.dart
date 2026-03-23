@@ -92,4 +92,30 @@ class ListasProvider with ChangeNotifier {
     await HiveService.salvarListaCompras(lista);
     notifyListeners();
   }
+
+  /// Importa listas externas (do Drive ou de código de compartilhamento).
+  /// [substituir] = true apaga tudo antes de importar.
+  /// [substituir] = false mescla, pulando IDs já existentes.
+  Future<void> importarListas(
+    List<ListaCompras> novasListas, {
+    bool substituir = false,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      if (substituir) {
+        await HiveService.limparTodosDados();
+      }
+      for (final lista in novasListas) {
+        if (!substituir && _listas.any((l) => l.id == lista.id)) continue;
+        await HiveService.salvarListaCompras(lista);
+      }
+      await carregarListas();
+    } catch (e) {
+      debugPrint('Erro ao importar listas: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }
