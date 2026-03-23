@@ -33,7 +33,9 @@ class _ReportScreenState extends State<ReportScreen> {
   Widget build(BuildContext context) {
     final allListas = Provider.of<ListasProvider>(context).listas;
 
-    _filteredList = allListas.where((lista) {
+    // Bug 6 fix: usa variável local para cálculos no build;
+    // _filteredList é atualizado apenas para uso no export (fora do build)
+    final filteredList = allListas.where((lista) {
       if (_selectedDateRange != null) {
         if (lista.dataCriacao.isBefore(_selectedDateRange!.start) ||
             lista.dataCriacao.isAfter(
@@ -58,13 +60,14 @@ class _ReportScreenState extends State<ReportScreen> {
       return true;
     }).toList();
 
-    _filteredList.sort((a, b) => b.dataCriacao.compareTo(a.dataCriacao));
+    filteredList.sort((a, b) => b.dataCriacao.compareTo(a.dataCriacao));
+    _filteredList = filteredList; // mantido apenas para o botão de export
 
     double totalGeralComprado = 0;
     double totalGeralAberto = 0;
     double totalGeral = 0;
 
-    for (var l in _filteredList) {
+    for (var l in filteredList) {
       totalGeralComprado += l.precoComprado;
       totalGeralAberto += (l.precoTotal - l.precoComprado);
       totalGeral += l.precoTotal;
@@ -88,15 +91,15 @@ class _ReportScreenState extends State<ReportScreen> {
           _buildFilters(),
           const Divider(height: 1),
           Expanded(
-            child: _filteredList.isEmpty
+            child: filteredList.isEmpty
                 ? const Center(
-                    child: Text('Nenhua lista encontrada para os filtros.'),
+                    child: Text('Nenhuma lista encontrada para os filtros.'),
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.only(bottom: 100),
-                    itemCount: _filteredList.length,
+                    itemCount: filteredList.length,
                     itemBuilder: (context, index) {
-                      return _buildReportCard(_filteredList[index]);
+                      return _buildReportCard(filteredList[index]);
                     },
                   ),
           ),
