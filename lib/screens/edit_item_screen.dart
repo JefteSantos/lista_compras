@@ -6,6 +6,7 @@ import '../models/item.dart';
 import 'package:lista_compras/models/listas_provider.dart';
 import 'package:lista_compras/utils/app_utils.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 
 class EditItemScreen extends StatefulWidget {
   final Item? item;
@@ -42,6 +43,12 @@ class _EditItemScreenState extends State<EditItemScreen> {
     _observacoesController = TextEditingController(
       text: widget.item?.observacoes ?? '',
     );
+
+    // Bug 5 fix: listeners para o Preview atualizar em tempo real
+    _nomeController.addListener(() => setState(() {}));
+    _quantidadeController.addListener(() => setState(() {}));
+    _precoController.addListener(() => setState(() {}));
+    _observacoesController.addListener(() => setState(() {}));
   }
 
   @override
@@ -90,14 +97,16 @@ class _EditItemScreenState extends State<EditItemScreen> {
     // ----------------------------------------------------------------------------------
 
     final quantidade = int.tryParse(_quantidadeController.text) ?? 1;
-    
-    // Parse currency allowing comma as decimal separator. 
-    // This supports "10,50" -> "10.50" and "10.50" -> "10.50".
-    String precoText = _precoController.text.replaceAll(',', '.');
+
+    // Bug 4 fix: remove separador de milhar antes de trocar vírgula por ponto
+    // Suporta: "1.500,50" → 1500.50, "10,50" → 10.50, "10.50" → 10.50
+    final precoText = _precoController.text
+        .replaceAll('.', '')   // remove separador de milhar
+        .replaceAll(',', '.'); // converte decimal
     final preco = double.tryParse(precoText);
 
     final item = Item(
-      id: widget.item?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.item?.id ?? const Uuid().v4(), // Bug 9 fix: UUID evita colisão de IDs
       nome: _nomeController.text.trim(),
       quantidade: quantidade,
       preco: preco,

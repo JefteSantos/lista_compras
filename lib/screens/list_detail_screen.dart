@@ -255,16 +255,16 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
                     onPressed: () {
-                      lista.finalizada = !lista.finalizada;
+                      // Bug 3 fix: usa os métodos do modelo em vez de duplicar lógica
                       if (lista.finalizada) {
-                        lista.dataFinalizacao = DateTime.now();
+                        lista.reabrirLista();
                       } else {
-                        lista.dataFinalizacao = null;
+                        lista.finalizarLista();
                       }
                       provider.atualizarLista(lista);
                       Navigator.pop(
                         context,
-                      ); // Volta pra home pois a lista mudou de tab (provavelmente)
+                      ); // Volta pra home pois a lista mudou de tab
                     },
                     icon: Icon(lista.finalizada ? Icons.replay : Icons.check),
                     label: Text(
