@@ -121,6 +121,16 @@ class _EditItemScreenState extends State<EditItemScreen> {
     Navigator.of(context).pop(item);
   }
 
+  /// Getter que faz o parse do campo de preço usando a mesma lógica do _salvarItem.
+  /// Retorna null se o campo estiver vazio ou inválido.
+  double? get _precoAtual {
+    if (_precoController.text.trim().isEmpty) return null;
+    final clean = _precoController.text
+        .replaceAll('.', '')
+        .replaceAll(',', '.');
+    return double.tryParse(clean);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -230,20 +240,23 @@ class _EditItemScreenState extends State<EditItemScreen> {
                       ),
                       const SizedBox(width: 16),
                       Text(
-                        _precoController.text.isEmpty
+                        _precoAtual == null
                             ? 'Preço não informado'
-                            : (() {
-                                try {
-                                  String clean = _precoController.text.replaceAll('.', '').replaceAll(',', '.');
-                                  double? val = double.tryParse(clean);
-                                  return val != null ? AppUtils.formatMoney(val) : 'R\$ ${_precoController.text}';
-                                } catch (e) {
-                                  return 'R\$ ${_precoController.text}';
-                                }
-                              })(),
+                            : AppUtils.formatMoney(_precoAtual!),
                       ),
                     ],
                   ),
+                  // Campo Total: só aparece quando preço é válido
+                  if (_precoAtual != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'Total: ${AppUtils.formatMoney(_precoAtual! * (int.tryParse(_quantidadeController.text) ?? 1))}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepPurple,
+                      ),
+                    ),
+                  ],
                   if (_observacoesController.text.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
