@@ -5,6 +5,7 @@ import 'package:lista_compras/models/lista_compras.dart';
 import 'package:lista_compras/screens/list_detail_screen.dart';
 import 'package:lista_compras/screens/report_screen.dart';
 import 'package:lista_compras/utils/app_utils.dart';
+import 'package:uuid/uuid.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -63,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     if (nome != null && mounted) {
       final novaLista = ListaCompras(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        id: const Uuid().v4(), // Bug 9 fix: UUID evita colisão de IDs
         nome: nome,
         dataCriacao: DateTime.now(),
       );
