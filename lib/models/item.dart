@@ -62,4 +62,28 @@ class Item extends HiveObject {
       dataCompra: dataCompra ?? this.dataCompra,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'nome': nome,
+        'quantidade': quantidade,
+        'preco': preco,
+        'comprado': comprado,
+        'observacoes': observacoes,
+        'dataCriacao': dataCriacao.toIso8601String(),
+        'dataCompra': dataCompra?.toIso8601String(),
+      };
+
+  factory Item.fromJson(Map<String, dynamic> json) => Item(
+        id: json['id'] as String,
+        nome: json['nome'] as String,
+        quantidade: (json['quantidade'] as num).toInt(),
+        preco: (json['preco'] as num?)?.toDouble(),
+        comprado: json['comprado'] as bool,
+        observacoes: json['observacoes'] as String?,
+        dataCriacao: DateTime.parse(json['dataCriacao'] as String),
+        dataCompra: json['dataCompra'] != null
+            ? DateTime.parse(json['dataCompra'] as String)
+            : null,
+      );
 }

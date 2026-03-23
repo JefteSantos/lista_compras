@@ -102,4 +102,30 @@ class ListaCompras extends HiveObject {
     dataFinalizacao = null;
     if (isInBox) save();
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'nome': nome,
+        'descricao': descricao,
+        'itens': itens.map((i) => i.toJson()).toList(),
+        'dataCriacao': dataCriacao.toIso8601String(),
+        'dataFinalizacao': dataFinalizacao?.toIso8601String(),
+        'finalizada': finalizada,
+        'cor': cor,
+      };
+
+  factory ListaCompras.fromJson(Map<String, dynamic> json) => ListaCompras(
+        id: json['id'] as String,
+        nome: json['nome'] as String,
+        descricao: json['descricao'] as String?,
+        itens: (json['itens'] as List<dynamic>)
+            .map((i) => Item.fromJson(i as Map<String, dynamic>))
+            .toList(),
+        dataCriacao: DateTime.parse(json['dataCriacao'] as String),
+        dataFinalizacao: json['dataFinalizacao'] != null
+            ? DateTime.parse(json['dataFinalizacao'] as String)
+            : null,
+        finalizada: json['finalizada'] as bool,
+        cor: json['cor'] as String?,
+      );
 }

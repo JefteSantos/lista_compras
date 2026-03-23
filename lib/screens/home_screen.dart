@@ -4,6 +4,8 @@ import 'package:lista_compras/models/listas_provider.dart';
 import 'package:lista_compras/models/lista_compras.dart';
 import 'package:lista_compras/screens/list_detail_screen.dart';
 import 'package:lista_compras/screens/report_screen.dart';
+import 'package:lista_compras/screens/settings_screen.dart';
+import 'package:lista_compras/services/share_code_service.dart';
 import 'package:lista_compras/utils/app_utils.dart';
 import 'package:uuid/uuid.dart';
 
@@ -84,6 +86,88 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  void _importarPorCodigo() async {
+    final controller = TextEditingController();
+    final ListaCompras? lista = await showDialog<ListaCompras>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.qr_code, color: Colors.deepPurple),
+            SizedBox(width: 8),
+            Text('Importar Lista'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Cole abaixo o código compartilhado por outra pessoa:',
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              maxLines: 4,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'NE1:...',
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.all(10),
+              ),
+              style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('CANCELAR'),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.download),
+            label: const Text('IMPORTAR'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepPurple,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              final lista = ShareCodeService.decodeList(controller.text.trim());
+              if (lista != null) {
+                Navigator.pop(ctx, lista);
+              } else {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  const SnackBar(
+                    content: Text('Código inválido ou corrompido.'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+          ),
+        ],
+      ),
+    );
+
+    if (lista != null && mounted) {
+      // Gera novo ID para evitar conflito com lista original
+      final novaLista = lista.copyWith(id: const Uuid().v4());
+      await Provider.of<ListasProvider>(
+        context,
+        listen: false,
+      ).adicionarLista(novaLista);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lista "${novaLista.nome}" importada com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,11 +175,27 @@ class _HomeScreenState extends State<HomeScreen>
         title: const Text('Minhas Listas'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.qr_code_scanner),
+            tooltip: 'Importar Lista por Código',
+            onPressed: _importarPorCodigo,
+          ),
+          IconButton(
             icon: const Icon(Icons.bar_chart),
             tooltip: 'Relatórios',
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => const ReportScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Configurações',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
+                ),
               );
             },
           ),
