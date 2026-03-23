@@ -7,6 +7,7 @@ import 'package:lista_compras/screens/edit_item_screen.dart';
 import 'package:lista_compras/screens/confirmation_dialog.dart';
 import 'package:flutter/services.dart';
 import 'package:lista_compras/utils/app_utils.dart';
+import 'package:lista_compras/services/share_code_service.dart';
 
 class ListDetailScreen extends StatefulWidget {
   final String listaId;
@@ -18,6 +19,76 @@ class ListDetailScreen extends StatefulWidget {
 }
 
 class _ListDetailScreenState extends State<ListDetailScreen> {
+  void _gerarCodigo(BuildContext context, ListaCompras lista) {
+    final codigo = ShareCodeService.encodeList(lista);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.qr_code, color: Colors.deepPurple),
+            SizedBox(width: 8),
+            Text('Código de Compartilhamento'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Compartilhe este código com alguém que tenha o app. '
+              'Ele poderá importar a lista "${lista.nome}" completamente.',
+              style: const TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: SelectableText(
+                codigo,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontFamily: 'monospace',
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('FECHAR'),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.copy),
+            label: const Text('COPIAR'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepPurple,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: codigo));
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Código copiado! Cole no WhatsApp, SMS ou email.',
+                  ),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
   void _editarNomeLista(BuildContext context, ListaCompras lista) async {
     final controller = TextEditingController(text: lista.nome);
 
@@ -166,11 +237,13 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
               ),
               PopupMenuButton<String>(
                 onSelected: (value) async {
-                  if (value == 'excluir') {
+                  if (value == 'gerar_codigo') {
+                    _gerarCodigo(context, lista);
+                  } else if (value == 'excluir') {
                     final confirmed = await showGenericConfirmationDialog(
                       context,
                       title: 'Excluir Lista',
-                      content: 'Tem certeza? Isso apagará todos os itens.',
+                      content: 'Tem certeza? Isso apagarrá todos os itens.',
                       confirmColor: Colors.red,
                       confirmText: 'EXCLUIR PERMANENTEMENTE',
                     );
@@ -183,6 +256,17 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                   }
                 },
                 itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'gerar_codigo',
+                    child: Row(
+                      children: [
+                        Icon(Icons.qr_code, color: Colors.deepPurple),
+                        SizedBox(width: 8),
+                        Text('Gerar Código de Compartilhamento'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuDivider(),
                   const PopupMenuItem(
                     value: 'excluir',
                     child: Row(
