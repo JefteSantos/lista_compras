@@ -10,6 +10,7 @@ import 'screens/onboarding_screen.dart';
 import 'services/auth_service.dart';
 import 'services/drive_backup_service.dart';
 import 'services/hive_service.dart';
+import 'services/home_widget_service.dart';
 
 /// Chave global do Navigator para acessar context no WidgetsBindingObserver.
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -19,6 +20,7 @@ void main() async {
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   await HiveService.init();
+  await HomeWidgetService.init();
   Intl.defaultLocale = 'pt_BR';
 
   FlutterNativeSplash.remove();
@@ -62,6 +64,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       if (ctx != null) {
         final provider = Provider.of<ListasProvider>(ctx, listen: false);
         DriveBackupService.uploadBackupSilently(provider.listas);
+        HomeWidgetService.atualizar(provider.listas);
       }
     }
   }

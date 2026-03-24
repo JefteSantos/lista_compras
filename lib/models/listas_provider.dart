@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lista_compras/services/hive_service.dart';
+import 'package:lista_compras/services/home_widget_service.dart';
 import 'lista_compras.dart';
 import 'item.dart';
 
@@ -30,6 +31,8 @@ class ListasProvider with ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+      // Atualiza o widget da tela inicial com os dados mais recentes
+      HomeWidgetService.atualizar(_listas);
     }
   }
 
