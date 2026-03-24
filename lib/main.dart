@@ -127,6 +127,3 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     );
   }
 }
-
-/// Chave global do Navigator para acessar context no WidgetsBindingObserver.
-final navigatorKey = GlobalKey<NavigatorState>();
