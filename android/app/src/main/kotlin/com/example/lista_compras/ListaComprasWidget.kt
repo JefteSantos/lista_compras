@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.RemoteViews
 import android.app.PendingIntent
+import es.antonborri.home_widget.HomeWidgetPlugin
 
 /**
  * Widget nativo Android para a tela inicial.
@@ -25,19 +26,17 @@ class ListaComprasWidget : AppWidgetProvider() {
     }
 
     companion object {
-        private const val PREFS_NAME = "HomeWidgetPreferences"
-
         fun updateWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int
         ) {
-            // Lê os dados salvos pelo Flutter via home_widget
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            val listasAtivas   = prefs.getInt("listas_ativas", 0)
-            val itensPendentes = prefs.getInt("itens_pendentes", 0)
-            val totalValor     = prefs.getString("total_valor", "R\$ 0,00") ?: "R\$ 0,00"
-            val horaAtual      = prefs.getString("ultima_atualizacao", "--:--") ?: "--:--"
+            // Lê os dados salvos pelo Flutter via home_widget usando o helper do próprio plugin
+            val widgetData = HomeWidgetPlugin.getData(context)
+            val listasAtivas   = widgetData.getInt("listas_ativas", 0)
+            val itensPendentes = widgetData.getInt("itens_pendentes", 0)
+            val totalValor     = widgetData.getString("total_valor", "R\$ 0,00") ?: "R\$ 0,00"
+            val horaAtual      = widgetData.getString("ultima_atualizacao", "--:--") ?: "--:--"
 
             // Monta a RemoteView com os dados atualizados
             val views = RemoteViews(context.packageName, R.layout.lista_compras_widget)
@@ -54,7 +53,7 @@ class ListaComprasWidget : AppWidgetProvider() {
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            views.setOnClickPendingIntent(android.R.id.content, pendingIntent)
+            views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }

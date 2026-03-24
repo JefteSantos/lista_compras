@@ -10,8 +10,7 @@ class HomeWidgetService {
   HomeWidgetService._();
 
   static const _appGroupId = 'com.example.lista_compras';
-  static const _qualifiedAndroidName =
-      'com.example.lista_compras.ListaComprasWidget';
+  static const _qualifiedAndroidName = 'ListaComprasWidget';
 
   /// Inicializa o home_widget. Deve ser chamado no main().
   static Future<void> init() async {
