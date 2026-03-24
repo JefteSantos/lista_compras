@@ -4,9 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../models/listas_provider.dart';
-import '../screens/privacy_policy_screen.dart';
 import '../services/auth_service.dart';
 import '../services/drive_backup_service.dart';
+import 'privacy_policy_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});

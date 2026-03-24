@@ -142,10 +142,13 @@ class _EditItemScreenState extends State<EditItemScreen> {
           IconButton(onPressed: _salvarItem, icon: const Icon(Icons.save)),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
             TextField(
               controller: _nomeController,
               decoration: const InputDecoration(
@@ -272,9 +275,13 @@ class _EditItemScreenState extends State<EditItemScreen> {
               ),
             ),
 
-            const Spacer(),
-
-            SizedBox(
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SizedBox(
               width: double.infinity,
               height: 50,
               child: ElevatedButton.icon(
@@ -292,8 +299,8 @@ class _EditItemScreenState extends State<EditItemScreen> {
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
