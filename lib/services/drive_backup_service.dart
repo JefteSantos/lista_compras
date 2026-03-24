@@ -89,7 +89,7 @@ class DriveBackupService {
     final tamanhoKb = (compressed.length / 1024).toStringAsFixed(1);
     debugPrint(
       '[DriveBackup] Backup realizado — '
-      'Tamanho: ${tamanhoKb} KB | '
+      'Tamanho: $tamanhoKb KB | '
       'Data: $agora',
     );
   }
