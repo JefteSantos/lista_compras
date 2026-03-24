@@ -1,3 +1,6 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -18,6 +21,21 @@ final navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+  // ── Firebase / Crashlytics ────────────────────────────────────────────────
+  await Firebase.initializeApp();
+
+  // Em modo release: envia crashes Flutter para o Crashlytics
+  // Em debug: apenas imprime no console, sem poluir o painel
+  if (!kDebugMode) {
+    FlutterError.onError =
+        FirebaseCrashlytics.instance.recordFlutterFatalError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   await HiveService.init();
   await HomeWidgetService.init();
