@@ -1,6 +1,3 @@
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -18,24 +15,12 @@ import 'services/hive_service.dart';
 final navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
-  // Preserva o splash nativo até o app estar pronto
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-
-  // Inicializa Firebase (Crashlytics)
-  await Firebase.initializeApp();
-
-  // Redireciona erros Flutter para Crashlytics em produção
-  FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-  PlatformDispatcher.instance.onError = (error, stack) {
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    return true;
-  };
 
   await HiveService.init();
   Intl.defaultLocale = 'pt_BR';
 
-  // Remove splash após inicialização
   FlutterNativeSplash.remove();
 
   runApp(
@@ -54,7 +39,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
-  // Checa se o onboarding já foi exibido
   bool get _onboardingCompleto =>
       HiveService.obterConfiguracao<bool>('onboarding_completo') ?? false;
 
@@ -71,7 +55,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  /// Backup automático ao pausar o app (usuário sai ou troca de app).
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
