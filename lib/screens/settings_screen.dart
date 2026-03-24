@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../models/listas_provider.dart';
+import '../screens/privacy_policy_screen.dart';
 import '../services/auth_service.dart';
 import '../services/drive_backup_service.dart';
 
@@ -188,6 +189,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 24),
               _buildSectionHeader(Icons.info_outline, 'Sobre o Backup'),
               _buildInfoCard(),
+              const SizedBox(height: 24),
+              _buildSectionHeader(Icons.gavel_outlined, 'Legal'),
+              _buildLegalCard(),
             ],
           ),
           if (_isLoading)
@@ -439,6 +443,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLegalCard() {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        leading: const Icon(Icons.privacy_tip_outlined, color: Colors.deepPurple),
+        title: const Text('Política de Privacidade'),
+        subtitle: const Text(
+          'Como tratamos seus dados',
+          style: TextStyle(fontSize: 12),
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
+        ),
       ),
     );
   }
