@@ -7,5 +7,5 @@
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
     android:description="@string/widget_description"
-    android:previewImage="@drawable/ic_launcher">
+    android:previewImage="@mipmap/ic_launcher">
 </appwidget-provider>

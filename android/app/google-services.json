@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "958891505864",
+    "project_id": "naoesquece-41ba5",
+    "storage_bucket": "naoesquece-41ba5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:958891505864:android:4d1016164cebed2e04cdfd",
+        "android_client_info": {
+          "package_name": "com.example.lista_compras"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDK8X1a1Hxud8FjH2udrAe0GmWqpseEz8k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
