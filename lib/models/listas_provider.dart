@@ -3,13 +3,22 @@ import 'package:lista_compras/services/hive_service.dart';
 import 'package:lista_compras/services/home_widget_service.dart';
 import 'lista_compras.dart';
 import 'item.dart';
+import '../services/drive_backup_service.dart';
 
 class ListasProvider with ChangeNotifier {
   List<ListaCompras> _listas = [];
   bool _isLoading = false;
+  
+  // Backup state
+  BackupStatus _backupStatus = BackupStatus.idle;
+  String? _lastBackupError;
+  DateTime? _lastBackupDate;
 
   List<ListaCompras> get listas => _listas;
   bool get isLoading => _isLoading;
+  BackupStatus get backupStatus => _backupStatus;
+  String? get lastBackupError => _lastBackupError;
+  DateTime? get lastBackupDate => _lastBackupDate;
 
   List<ListaCompras> get listasAtivas =>
       _listas.where((l) => !l.finalizada).toList();
@@ -17,6 +26,9 @@ class ListasProvider with ChangeNotifier {
       _listas.where((l) => l.finalizada).toList();
 
   ListasProvider() {
+    _lastBackupDate = HiveService.obterConfiguracao<String>('ultimo_backup') != null 
+        ? DateTime.parse(HiveService.obterConfiguracao<String>('ultimo_backup')!)
+        : null;
     carregarListas();
   }
 
@@ -121,4 +133,24 @@ class ListasProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Realiza backup manual e atualiza o estado visual
+  Future<void> realizarBackupNoDrive() async {
+    _backupStatus = BackupStatus.loading;
+    _lastBackupError = null;
+    notifyListeners();
+
+    try {
+      await DriveBackupService.uploadBackup(_listas);
+      _backupStatus = BackupStatus.success;
+      _lastBackupDate = DateTime.now();
+      notifyListeners();
+    } catch (e) {
+      _backupStatus = BackupStatus.error;
+      _lastBackupError = e.toString();
+      notifyListeners();
+    }
+  }
 }
+
+enum BackupStatus { idle, loading, success, error }

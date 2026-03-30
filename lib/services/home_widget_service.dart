@@ -9,7 +9,7 @@ import '../models/lista_compras.dart';
 class HomeWidgetService {
   HomeWidgetService._();
 
-  static const _appGroupId = 'com.example.lista_compras';
+  static const _appGroupId = 'com.culpadoturing.naoesquece';
   static const _qualifiedAndroidName = 'ListaComprasWidget';
 
   /// Inicializa o home_widget. Deve ser chamado no main().
