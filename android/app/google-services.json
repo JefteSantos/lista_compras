@@ -7,12 +7,29 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:958891505864:android:4d1016164cebed2e04cdfd",
+        "mobilesdk_app_id": "1:958891505864:android:045e096bb0c646b704cdfd",
         "android_client_info": {
-          "package_name": "com.example.lista_compras"
+          "package_name": "com.naoesquece.culpadoturing"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "958891505864-7biantrrdltmhja8ibb1v0bebhqili7v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.naoesquece.culpadoturing",
+            "certificate_hash": "1f847bf7091b06668ad422a2393aab5b5fedc6c8"
+          }
+        },
+        {
+          "client_id": "958891505864-mijbb5atf0eto74baiql55g7912cbavs.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.naoesquece.culpadoturing",
+            "certificate_hash": "b307f9453c584473cdc4cc2ca6befec5dd6ea76b"
+          }
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDK8X1a1Hxud8FjH2udrAe0GmWqpseEz8k"
@@ -20,7 +37,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "958891505864-gpprnfpj92rnh1o1kp9igon9cis9g1pc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

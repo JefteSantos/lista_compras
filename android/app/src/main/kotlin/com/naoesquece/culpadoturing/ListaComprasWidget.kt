@@ -1,4 +1,4 @@
-package com.example.lista_compras
+package com.naoesquece.culpadoturing
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider

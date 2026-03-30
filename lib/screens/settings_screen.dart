@@ -43,15 +43,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _signIn() async {
     setState(() => _isLoading = true);
-    final user = await AuthService.signIn();
-    setState(() {
-      _currentUser = user;
-      _isLoading = false;
-    });
-    if (user != null) {
-      _setStatus('Login realizado! Agora você pode fazer backup das suas listas.');
-    } else {
-      _setStatus('Login cancelado.', error: true);
+    try {
+      final user = await AuthService.signIn();
+      setState(() {
+        _currentUser = user;
+        _isLoading = false;
+      });
+      if (user != null) {
+        _setStatus('Login realizado! Agora você pode fazer backup das suas listas.');
+      } else {
+        _setStatus('Login cancelado.', error: true);
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _setStatus('ERRO: $e', error: true);
+      // Janela de choque pra mostrar o erro real
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Erro do Google'),
+            content: Text(e.toString()),
+            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
+          ),
+        );
+      }
     }
   }
 
