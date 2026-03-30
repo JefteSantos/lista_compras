@@ -14,9 +14,17 @@ class ShareCodeService {
   static const _prefix = 'NE1:';
 
   /// Codifica uma [ListaCompras] em um código de texto compacto.
+  /// Lança uma exceção se a lista for excessivamente grande para compartilhar por texto.
   static String encodeList(ListaCompras lista) {
     final jsonStr = jsonEncode(lista.toJson());
     final compressed = gzip.encode(utf8.encode(jsonStr));
+
+    // Limite sugerido para evitar quebrar WhatsApp/SMS
+    // 64KB é um limite seguro para a maioria dos mensageiros.
+    if (compressed.length > 64 * 1024) {
+      throw const ShareCodeOversizedException();
+    }
+
     return '$_prefix${base64Url.encode(compressed)}';
   }
 
@@ -35,4 +43,10 @@ class ShareCodeService {
       return null;
     }
   }
+}
+
+class ShareCodeOversizedException implements Exception {
+  const ShareCodeOversizedException();
+  @override
+  String toString() => 'A lista é muito grande para compartilhar por código. Use a exportação em PDF ou arquivo.';
 }

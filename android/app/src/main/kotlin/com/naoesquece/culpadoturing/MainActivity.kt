@@ -1,4 +1,4 @@
-package com.example.lista_compras
+package com.naoesquece.culpadoturing
 
 import io.flutter.embedding.android.FlutterActivity
 
