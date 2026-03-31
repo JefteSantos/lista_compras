@@ -1,0 +1,32 @@
+[
+  {
+    "resourceName": "nome_lista",
+    "inputText": "Lista do Robô AI",
+    "directiveType": "CLICK_OR_INPUT"
+  },
+  {
+    "resourceName": "item_nome",
+    "inputText": "Leite Integral 1L",
+    "directiveType": "CLICK_OR_INPUT"
+  },
+  {
+    "resourceName": "item_quantidade",
+    "inputText": "5",
+    "directiveType": "CLICK_OR_INPUT"
+  },
+  {
+    "resourceName": "item_preco",
+    "inputText": "4.89",
+    "directiveType": "CLICK_OR_INPUT"
+  },
+  {
+    "resourceName": "item_observacoes",
+    "inputText": "Pegar a marca com melhor validade encontrada pelo robô",
+    "directiveType": "CLICK_OR_INPUT"
+  },
+  {
+    "resourceName": "import_codigo_field",
+    "inputText": "NE2:eJyrVkrLzClJLUnMz9PJSM3JyVeyMjC0MDIxMjS1NDS1NDKxtTSyNDS3tDCyMLW0sLY0srSwtLS0MjYyMjYyNzc3NzM0M7S0srYAAIsAFm8=",
+    "directiveType": "CLICK_OR_INPUT"
+  }
+]
