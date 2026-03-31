@@ -107,7 +107,17 @@ class ShareCodeService {
       if (!isV1 && !isV2) return null;
       
       final prefix = isV1 ? _prefixV1 : _prefixV2;
-      final encoded = stripped.substring(prefix.length);
+      String encoded = stripped.substring(prefix.length);
+      
+      // Validação rápida: comprimento % 4 não pode ser 1 no Base64
+      if (encoded.length % 4 == 1) return null;
+
+      // Normaliza o padding do Base64 (o Dart é exigente com comprimento múltiplo de 4)
+      switch (encoded.length % 4) {
+        case 2: encoded += '=='; break;
+        case 3: encoded += '='; break;
+      }
+      
       final compressed = base64Url.decode(encoded);
       final jsonStr = utf8.decode(gzip.decode(compressed));
       
@@ -118,9 +128,7 @@ class ShareCodeService {
       }
       
       return ListaCompras.fromJson(json);
-    } catch (e) {
-      // ignore: avoid_print
-      print('Erro ao decodificar lista: $e');
+    } catch (_) {
       return null;
     }
   }
