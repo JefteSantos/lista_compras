@@ -20,7 +20,25 @@ class ListDetailScreen extends StatefulWidget {
 
 class _ListDetailScreenState extends State<ListDetailScreen> {
   void _gerarCodigo(BuildContext context, ListaCompras lista) {
-    final codigo = ShareCodeService.encodeList(lista);
+    String codigo;
+    try {
+      codigo = ShareCodeService.encodeList(lista);
+    } on ShareCodeOversizedException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.orange,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+      return;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro inesperado ao gerar código.')),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
