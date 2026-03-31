@@ -11,7 +11,18 @@ class HiveService {
   static Box<Item>? _itemBox;
   static Box? _configBox;
 
-  static Future<void> init() async {
+  static Future<void> init({
+    Box<ListaCompras>? listaBox,
+    Box<Item>? itemBox,
+    Box? configBox,
+  }) async {
+    if (listaBox != null && itemBox != null && configBox != null) {
+      _listaComprasBox = listaBox;
+      _itemBox = itemBox;
+      _configBox = configBox;
+      return;
+    }
+
     await Hive.initFlutter();
     Hive.registerAdapter(ItemAdapter());
     Hive.registerAdapter(ListaComprasAdapter());
