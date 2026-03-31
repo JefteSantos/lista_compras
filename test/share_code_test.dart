@@ -53,9 +53,7 @@ void main() {
       final code = ShareCodeService.encodeList(listaBase);
       
       // Simula o que o WhatsApp faz: insere espaços e quebras de linha no meio
-      final messyCode = code.substring(0, 10) + '\n  ' + 
-                        code.substring(10, 20) + '   ' + 
-                        code.substring(20);
+      final messyCode = "${code.substring(0, 10)}\n  ${code.substring(10, 20)}   ${code.substring(20)}";
 
       final decoded = ShareCodeService.decodeList(messyCode);
       expect(decoded, isNotNull);
