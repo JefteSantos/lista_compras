@@ -7,6 +7,7 @@ import 'package:lista_compras/screens/report_screen.dart';
 import 'package:lista_compras/screens/settings_screen.dart';
 import 'package:lista_compras/services/share_code_service.dart';
 import 'package:lista_compras/utils/app_utils.dart';
+import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -91,11 +92,20 @@ class _HomeScreenState extends State<HomeScreen>
     final ListaCompras? lista = await showDialog<ListaCompras>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Row(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 10),
+        title: Row(
           children: [
-            Icon(Icons.qr_code, color: Colors.deepPurple),
-            SizedBox(width: 8),
-            Text('Importar Lista'),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.deepPurple.shade50,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.qr_code_2, color: Colors.deepPurple),
+            ),
+            const SizedBox(width: 12),
+            const Text('Importar Lista', style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
         content: Column(
@@ -103,44 +113,68 @@ class _HomeScreenState extends State<HomeScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Cole abaixo o código compartilhado por outra pessoa:',
-              style: TextStyle(color: Colors.grey),
+              'Cole abaixo o código da lista que você recebeu:',
+              style: TextStyle(color: Colors.black54, fontSize: 13),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             TextField(
               controller: controller,
               maxLines: 4,
               autofocus: true,
-              decoration: const InputDecoration(
-                hintText: 'NE1:...',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.all(10),
+              decoration: InputDecoration(
+                hintText: 'Cole o código NE2:...',
+                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+                filled: true,
+                fillColor: Colors.grey.shade50,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.content_paste),
+                  onPressed: () async {
+                    final data = await Clipboard.getData(Clipboard.kTextPlain);
+                    if (data?.text != null) {
+                      controller.text = data!.text!;
+                    }
+                  },
+                  tooltip: 'Colar do teclado',
+                ),
               ),
-              style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+              style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
             ),
           ],
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('CANCELAR'),
+            child: const Text('CANCELAR', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton.icon(
-            icon: const Icon(Icons.download),
+            icon: const Icon(Icons.download, size: 18),
             label: const Text('IMPORTAR'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepPurple,
               foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () {
-              final lista = ShareCodeService.decodeList(controller.text.trim());
+              final lista = ShareCodeService.decodeList(controller.text);
               if (lista != null) {
                 Navigator.pop(ctx, lista);
               } else {
                 ScaffoldMessenger.of(ctx).showSnackBar(
                   const SnackBar(
-                    content: Text('Código inválido ou corrompido.'),
-                    backgroundColor: Colors.red,
+                    content: Text('Código inválido ou corrompido!'),
+                    backgroundColor: Colors.redAccent,
+                    behavior: SnackBarBehavior.floating,
                   ),
                 );
               }
