@@ -1,5 +1,6 @@
 
 # Script de Build Automatico para Flutter (Windows)
+# Atualiza a versao e gera o APK limpando o cache para evitar erros de plugins
 
 $pubspec = "pubspec.yaml"
 $content = Get-Content $pubspec -Raw
@@ -16,6 +17,10 @@ if ($content -match "version: (\d+\.\d+\.\d+)\+(\d+)") {
     
     Write-Host "Versao atualizada para: $vName+$vBuild" -ForegroundColor Cyan
 }
+
+# Limpeza e Build
+Write-Host "Limpando cache (flutter clean)..." -ForegroundColor Gray
+flutter clean
 
 Write-Host "Iniciando build do APK Release..." -ForegroundColor Yellow
 flutter build apk --release
