@@ -39,14 +39,17 @@ class _HomeScreenState extends State<HomeScreen>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Nova Lista'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Nome da Lista',
-            hintText: 'Ex: Supermercado Semanal',
+        content: Semantics(
+          label: 'nome_lista',
+          child: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              labelText: 'Nome da Lista',
+              hintText: 'Ex: Supermercado Semanal',
+            ),
+            autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
           ),
-          autofocus: true,
-          textCapitalization: TextCapitalization.sentences,
         ),
         actions: [
           TextButton(
@@ -117,35 +120,39 @@ class _HomeScreenState extends State<HomeScreen>
               style: TextStyle(color: Colors.black54, fontSize: 13),
             ),
             const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              maxLines: 4,
-              autofocus: true,
-              decoration: InputDecoration(
-                hintText: 'Cole o código NE2:...',
-                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 12),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.content_paste),
-                  onPressed: () async {
-                    final data = await Clipboard.getData(Clipboard.kTextPlain);
-                    if (data?.text != null) {
-                      controller.text = data!.text!;
-                    }
-                  },
-                  tooltip: 'Colar do teclado',
+            Semantics(
+              label: 'import_codigo_field',
+              child: TextField(
+                controller: controller,
+                maxLines: 4,
+                autofocus: true,
+                style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+                decoration: InputDecoration(
+                  hintText: 'Cole o código NE2:...',
+                  hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  prefixIcon: const Icon(Icons.qr_code, size: 18),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.content_paste, size: 20),
+                    onPressed: () async {
+                      final data = await Clipboard.getData('text/plain');
+                      if (data?.text != null) {
+                        controller.text = data!.text!;
+                      }
+                    },
+                    tooltip: 'Colar do teclado',
+                  ),
                 ),
               ),
-              style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
             ),
           ],
         ),

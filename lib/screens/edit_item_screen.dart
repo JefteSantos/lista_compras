@@ -149,67 +149,79 @@ class _EditItemScreenState extends State<EditItemScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-            TextField(
-              controller: _nomeController,
-              decoration: const InputDecoration(
-                labelText: 'Nome do Item *',
-                hintText: 'Ex: Leite, Pão, Arroz...',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.shopping_basket),
+            Semantics(
+              label: 'item_nome',
+              child: TextField(
+                controller: _nomeController,
+                decoration: const InputDecoration(
+                  labelText: 'Nome do Item *',
+                  hintText: 'Ex: Leite, Pão, Arroz...',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.shopping_basket),
+                ),
+                textCapitalization: TextCapitalization.words,
               ),
-              textCapitalization: TextCapitalization.words,
             ),
             const SizedBox(height: 16),
 
             Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _quantidadeController,
-                    decoration: const InputDecoration(
-                      labelText: 'Quantidade',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.numbers),
+                  child: Semantics(
+                    label: 'item_quantidade',
+                    child: TextField(
+                      controller: _quantidadeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Quantidade',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.numbers),
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     ),
-                    keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
                 ),
                 const SizedBox(width: 16),
 
                 Expanded(
-                  child: TextField(
-                    controller: _precoController,
-                    decoration: const InputDecoration(
-                      labelText: 'Preço (opcional)',
-                      hintText: 'Ex: 4,50',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.attach_money),
-                      prefixText: 'R\$ ',
+                  child: Semantics(
+                    label: 'item_preco',
+                    child: TextField(
+                      controller: _precoController,
+                      decoration: const InputDecoration(
+                        labelText: 'Preço (opcional)',
+                        hintText: 'Ex: 4,50',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.attach_money),
+                        prefixText: 'R\$ ',
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        // Allow digits and one comma or dot
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
+                      ],
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    inputFormatters: [
-                      // Allow digits and one comma or dot
-                      FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
-                    ],
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
 
-            TextField(
-              controller: _observacoesController,
-              decoration: const InputDecoration(
-                labelText: 'Observações (opcional)',
-                hintText: 'Ex: Marca preferida, quantidade específica...',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.note),
+            Semantics(
+              label: 'item_observacoes',
+              child: TextField(
+                controller: _observacoesController,
+                decoration: const InputDecoration(
+                  labelText: 'Observações (opcional)',
+                  hintText: 'Ex: Marca preferida, quantidade específica...',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.note),
+                ),
+                maxLines: 3,
+                textCapitalization: TextCapitalization.sentences,
               ),
-              maxLines: 3,
-              textCapitalization: TextCapitalization.sentences,
             ),
             const SizedBox(height: 24),
 
