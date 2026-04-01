@@ -9,6 +9,8 @@ import 'package:lista_compras/services/share_code_service.dart';
 import 'package:lista_compras/utils/app_utils.dart';
 import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
+import 'package:lista_compras/services/ocr_service.dart';
+import 'package:lista_compras/models/item.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -209,6 +211,82 @@ class _HomeScreenState extends State<HomeScreen>
     }
   }
 
+  void _exibirConfirmacaoOCR(BuildContext context, List<Item> itensScan) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Itens Escaneados'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: itensScan.length,
+            itemBuilder: (context, index) {
+              final item = itensScan[index];
+              return ListTile(
+                leading: CircleAvatar(child: Text(item.quantidade.toString())),
+                title: Text(item.nome),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    (ctx as Element).markNeedsBuild();
+                    itensScan.removeAt(index);
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('CANCELAR'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final controller = TextEditingController(
+                text: 'Scanner ${DateTime.now().day}/${DateTime.now().month}',
+              );
+              final nome = await showDialog<String>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Nome da Nova Lista'),
+                  content: TextField(controller: controller, autofocus: true),
+                  actions: [
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, controller.text),
+                      child: const Text('CRIAR'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (nome != null && context.mounted) {
+                final novaLista = ListaCompras(
+                  id: const Uuid().v4(),
+                  nome: nome,
+                  dataCriacao: DateTime.now(),
+                  itens: itensScan,
+                );
+                await Provider.of<ListasProvider>(context, listen: false)
+                    .adicionarLista(novaLista);
+                if (context.mounted) {
+                  Navigator.pop(ctx);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ListDetailScreen(listaId: novaLista.id),
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('CRIAR LISTA'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -216,9 +294,19 @@ class _HomeScreenState extends State<HomeScreen>
         title: const Text('Minhas Listas'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.qr_code_scanner),
-            tooltip: 'Importar Lista por Código',
+            icon: const Icon(Icons.camera_alt),
+            onPressed: () async {
+              final result = await OCRService.scanList(fromCamera: true);
+              if (result.isNotEmpty && mounted) {
+                _exibirConfirmacaoOCR(context, result);
+              }
+            },
+            tooltip: 'Escanear lista física',
+          ),
+          IconButton(
+            icon: const Icon(Icons.download),
             onPressed: _importarPorCodigo,
+            tooltip: 'Importar por código',
           ),
           IconButton(
             icon: const Icon(Icons.bar_chart),

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:lista_compras/models/listas_provider.dart';
 import 'package:lista_compras/models/lista_compras.dart';
 import 'package:lista_compras/models/item.dart';
+import 'package:lista_compras/models/preco_historico.dart';
 import 'package:lista_compras/screens/home_screen.dart';
 import 'package:lista_compras/services/hive_service.dart';
 import 'package:hive/hive.dart';
@@ -15,13 +16,22 @@ void main() {
     Hive.init(tempDir.path);
     if (!Hive.isAdapterRegistered(0)) Hive.registerAdapter(ItemAdapter());
     if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(ListaComprasAdapter());
+    if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(PrecoHistoricoAdapter());
+    if (!Hive.isAdapterRegistered(3)) Hive.registerAdapter(PrecoEntradaAdapter());
   });
 
   setUp(() async {
     final lb = await Hive.openBox<ListaCompras>('listas_compras');
     final ib = await Hive.openBox<Item>('itens');
     final cb = await Hive.openBox('configuracoes');
-    await HiveService.init(listaBox: lb, itemBox: ib, configBox: cb);
+    final hb = await Hive.openBox<PrecoHistorico>('historico_precos');
+    
+    await HiveService.init(
+      listaBox: lb,
+      itemBox: ib,
+      configBox: cb,
+      historicoBox: hb,
+    );
   });
 
   tearDown(() async {

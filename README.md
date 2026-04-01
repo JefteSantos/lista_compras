@@ -5,12 +5,20 @@ Aplicativo Flutter para criar, salvar, atualizar, compartilhar e consultar o his
 > Substitua o marcador acima por um nome curto e memorável quando definir o nome oficial do app.
 
 ## ✨ Principais recursos
-- **Criar listas**: itens com nome, quantidade, unidade e observações.
+- **Criar listas**: itens com nome, quantidade, preço e observações.
 - **Salvar e atualizar**: edite itens e listas a qualquer momento com feedback visual.
-- **Compartilhar**: envie a lista por WhatsApp, e-mail, apps sociais ou exporte como texto/arquivo.
+- **Marcar como comprado**: risque itens e acompanhe o progresso em tempo real.
+- **Compartilhar por código**: gere um código compacto (`NE2:...`) para enviar a lista a outro usuário do app via WhatsApp, SMS ou qualquer canal de texto.
+- **Compartilhar como texto**: copie a lista formatada para WhatsApp com preços unitários e totais por item.
 - **Histórico**: reabra listas antigas, duplique e reutilize modelos.
-- **Buscar e filtrar**: encontre itens rapidamente (por status, categoria, texto).
-- **Marcar como comprado**: riscar itens e ver progresso.
+- **Buscar e filtrar**: encontre itens rapidamente por status, categoria ou texto.
+- **Histórico de preços**: ao finalizar uma lista, os preços dos itens comprados são registrados automaticamente. Na próxima compra, o app exibe o último preço pago e um indicador de tendência (↑ mais caro, ↓ mais barato, → igual).
+- **Scanner OCR**: digitalize listas físicas usando a câmera do celular — funciona melhor com letras de forma/impressas.
+- **Widget de tela inicial**: veja os itens pendentes da lista ativa diretamente na tela inicial do Android, sem abrir o app.
+- **Exportação avançada**: exporte suas listas em **PDF**, **Excel (XLSX)** e **CSV**.
+- **Login com Google**: autentique-se com sua conta Google para habilitar o backup em nuvem.
+- **Backup no Google Drive**: salve e restaure suas listas diretamente no Drive, garantindo que nenhum dado seja perdido.
+- **Relatórios**: visualize estatísticas de gastos e histórico de compras.
 - **Multiplataforma**: Android e Web (Chrome) já suportados.
 
 ## 🗃 Persistência de dados (atual e planejado)

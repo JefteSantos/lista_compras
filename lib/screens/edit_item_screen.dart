@@ -261,6 +261,57 @@ class _EditItemScreenState extends State<EditItemScreen> {
                       ),
                     ],
                   ),
+                  // --- SEÇÃO DE HISTÓRICO E TENDÊNCIA ---
+                  if (_nomeController.text.isNotEmpty) ...[
+                    Consumer<ListasProvider>(
+                      builder: (context, provider, child) {
+                        final ultimoPreco = provider.obterUltimoPreco(_nomeController.text);
+                        if (ultimoPreco == null) return const SizedBox.shrink();
+
+                        final precoAtual = _precoAtual;
+                        final diferenca = precoAtual != null ? (precoAtual - ultimoPreco) : 0.0;
+                        final ehMaisCaro = precoAtual != null && diferenca > 0.01;
+                        final ehMaisBarato = precoAtual != null && diferenca < -0.01;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Row(
+                            children: [
+                              Icon(
+                                precoAtual == null 
+                                  ? Icons.history 
+                                  : (ehMaisCaro ? Icons.trending_up : (ehMaisBarato ? Icons.trending_down : Icons.trending_flat)),
+                                size: 16,
+                                color: precoAtual == null 
+                                  ? Colors.grey 
+                                  : (ehMaisCaro ? Colors.red : (ehMaisBarato ? Colors.green : Colors.grey)),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Último pago: ${AppUtils.formatMoney(ultimoPreco)}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: precoAtual == null 
+                                    ? Colors.grey.shade700 
+                                    : (ehMaisCaro ? Colors.red : (ehMaisBarato ? Colors.green : Colors.grey.shade700)),
+                                ),
+                              ),
+                              if (precoAtual != null && (ehMaisCaro || ehMaisBarato))
+                                Text(
+                                  ' (${ehMaisCaro ? '+' : ''}${AppUtils.formatMoney(diferenca.abs())})',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: ehMaisCaro ? Colors.red : Colors.green,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                  // --------------------------------------
                   // Campo Total: só aparece quando preço é válido
                   if (_precoAtual != null) ...[
                     const SizedBox(height: 4),

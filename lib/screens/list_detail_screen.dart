@@ -185,7 +185,10 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
     if (itensComprados.isNotEmpty) {
       buffer.writeln('\n✅ *Já Peguei:*');
       for (var item in itensComprados) {
-        buffer.writeln('  • ${item.quantidade}x ${item.nome}');
+        final preco = item.preco != null
+            ? ' - ${AppUtils.formatMoney(item.preco!)}${item.quantidade > 1 ? ' (total: ${AppUtils.formatMoney(item.precoTotal)})' : ''}'
+            : '';
+        buffer.writeln('  • ${item.quantidade}x ${item.nome}$preco');
       }
     }
 
@@ -356,17 +359,19 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
-                    onPressed: () {
-                      // Bug 3 fix: usa os métodos do modelo em vez de duplicar lógica
+                    onPressed: () async {
                       if (lista.finalizada) {
+                        // Reabrir: apenas atualiza o estado da lista
                         lista.reabrirLista();
+                        await provider.atualizarLista(lista);
                       } else {
-                        lista.finalizarLista();
+                        // Finalizar: usa o método do provider que também
+                        // salva o histórico de preços dos itens comprados
+                        await provider.finalizarLista(lista);
                       }
-                      provider.atualizarLista(lista);
-                      Navigator.pop(
-                        context,
-                      ); // Volta pra home pois a lista mudou de tab
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                      }
                     },
                     icon: Icon(lista.finalizada ? Icons.replay : Icons.check),
                     label: Text(
