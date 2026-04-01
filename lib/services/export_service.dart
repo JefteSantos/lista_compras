@@ -28,7 +28,6 @@ class ExportService {
 
     return 'NaoEsquece_Relatorio_${dateStr}_$_exportCounter.$extension';
   }
-
   static Future<void> exportToPdf(
     BuildContext context,
     List<ListaCompras> listas,
@@ -36,148 +35,176 @@ class ExportService {
     bool includeItems,
   ) async {
     try {
+      // Usar PdfGoogleFonts para suportar acentos e ser mais eficiente em termos de memória (subsetting)
+      final font = await PdfGoogleFonts.nunitoRegular();
+      final bold = await PdfGoogleFonts.nunitoBold();
+
       final pdf = pw.Document();
 
       pdf.addPage(
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
-          build: (context) => [
-            pw.Header(
-              level: 0,
-              child: pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text(
-                    'Relatorio de Compras',
+          margin: const pw.EdgeInsets.all(32),
+          theme: pw.ThemeData.withFont(base: font, bold: bold),
+          header: (context) => pw.Header(
+            level: 0,
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text('Relatório de Compras',
                     style: pw.TextStyle(
-                      fontSize: 24,
-                      fontWeight: pw.FontWeight.bold,
+                        fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                pw.Text('Não Esquece!',
+                    style: pw.TextStyle(
+                        fontSize: 12, color: PdfColors.grey700)),
+              ],
+            ),
+          ),
+          footer: (context) => pw.Container(
+            alignment: pw.Alignment.centerRight,
+            margin: const pw.EdgeInsets.only(top: 10),
+            padding: const pw.EdgeInsets.only(top: 5),
+            decoration: const pw.BoxDecoration(
+              border: pw.Border(top: pw.BorderSide(color: PdfColors.grey300)),
+            ),
+            child: pw.Text(
+              'Página ${context.pageNumber} de ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+            ),
+          ),
+          build: (pw.Context context) {
+            final List<pw.Widget> widgets = [];
+
+            if (periodo != null) {
+              widgets.add(
+                pw.Padding(
+                  padding: const pw.EdgeInsets.only(bottom: 20),
+                  child: pw.Text(
+                    'Período: ${DateFormat('dd/MM/yyyy').format(periodo.start)} a ${DateFormat('dd/MM/yyyy').format(periodo.end)}',
+                    style: const pw.TextStyle(
+                      fontSize: 12,
+                      color: PdfColors.grey700,
                     ),
                   ),
-                  pw.Text(
-                    DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now()),
-                  ),
-                ],
-              ),
-            ),
-            if (periodo != null)
-              pw.Padding(
-                padding: const pw.EdgeInsets.only(bottom: 20),
-                child: pw.Text(
-                  'Periodo: ${DateFormat('dd/MM/yyyy').format(periodo.start)} a ${DateFormat('dd/MM/yyyy').format(periodo.end)}',
-                  style: const pw.TextStyle(
-                    fontSize: 12,
-                    color: PdfColors.grey700,
-                  ),
                 ),
-              ),
+              );
+            }
 
-            ...listas.map((lista) {
+            // Cada lista de compras
+            for (var lista in listas) {
               final valorAberto = lista.precoTotal - lista.precoComprado;
 
-              return pw.Container(
-                margin: const pw.EdgeInsets.only(bottom: 15),
-                decoration: pw.BoxDecoration(
-                  border: pw.Border.all(color: PdfColors.grey300),
-                  borderRadius: const pw.BorderRadius.all(
-                    pw.Radius.circular(5),
+              widgets.add(
+                pw.Container(
+                  margin: const pw.EdgeInsets.only(bottom: 10),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.grey300),
+                    borderRadius:
+                        const pw.BorderRadius.all(pw.Radius.circular(5)),
                   ),
-                ),
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Container(
-                      color: PdfColors.grey100,
-                      padding: const pw.EdgeInsets.all(8),
-                      child: pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text(
-                            lista.nome,
-                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                          ),
-                          pw.Text(
-                            DateFormat('dd/MM/yyyy').format(lista.dataCriacao),
-                          ),
-                        ],
-                      ),
-                    ),
-                    pw.Padding(
-                      padding: const pw.EdgeInsets.all(8),
-                      child: pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text(
-                            'Total: ${AppUtils.formatMoney(lista.precoTotal)}',
-                          ),
-                          pw.Text(
-                            'Pago: ${AppUtils.formatMoney(lista.precoComprado)}',
-                          ),
-                          pw.Text(
-                            'Aberto: ${AppUtils.formatMoney(valorAberto)}',
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Tabela de itens
-                    if (includeItems && lista.itens.isNotEmpty)
-                      pw.Padding(
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      // Cabeçalho da Lista
+                      pw.Container(
+                        color: PdfColors.grey100,
                         padding: const pw.EdgeInsets.all(8),
-                        child: pw.Column(
-                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        child: pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                           children: [
                             pw.Text(
-                              'Itens:',
-                              style: pw.TextStyle(
-                                fontWeight: pw.FontWeight.bold,
-                              ),
+                              lista.nome,
+                              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                             ),
-                            pw.SizedBox(height: 4),
-                            ...lista.itens.map((item) {
-                              return pw.Padding(
-                                padding: const pw.EdgeInsets.only(bottom: 2),
-                                child: pw.Row(
-                                  mainAxisAlignment:
-                                      pw.MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    pw.Expanded(
-                                      child: pw.Text(
-                                        '${item.quantidade}x ${item.nome}',
-                                        style: const pw.TextStyle(fontSize: 10),
-                                      ),
-                                    ),
-                                    pw.Text(
-                                      item.preco != null
-                                          ? AppUtils.formatMoney(item.preco!)
-                                          : '-',
-                                      style: const pw.TextStyle(fontSize: 10),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }),
+                            pw.Text(
+                              DateFormat('dd/MM/yyyy').format(lista.dataCriacao),
+                            ),
                           ],
                         ),
                       ),
-                  ],
-                ),
-              );
-            }),
-
-            pw.Divider(),
-            pw.Row(
-              mainAxisAlignment: pw.MainAxisAlignment.end,
-              children: [
-                pw.Text(
-                  'TOTAL GERAL: ${AppUtils.formatMoney(listas.fold(0.0, (sum, item) => sum + item.precoTotal))}',
-                  style: pw.TextStyle(
-                    fontSize: 16,
-                    fontWeight: pw.FontWeight.bold,
+                      // Resumo da Lista
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(8),
+                        child: pw.Row(
+                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                          children: [
+                            pw.Text(
+                                'Total: ${AppUtils.formatMoney(lista.precoTotal)}'),
+                            pw.Text(
+                                'Pago: ${AppUtils.formatMoney(lista.precoComprado)}'),
+                            pw.Text(
+                                'Aberto: ${AppUtils.formatMoney(valorAberto)}'),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ],
+              );
+
+              // Itens Individuais (como widgets separados para permitir quebras de página)
+              if (includeItems && lista.itens.isNotEmpty) {
+                widgets.add(
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.only(left: 20, bottom: 4),
+                    child: pw.Text(
+                      'Itens:',
+                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                    ),
+                  ),
+                );
+
+                for (var item in lista.itens) {
+                  widgets.add(
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.only(
+                        left: 30,
+                        right: 10,
+                        bottom: 2,
+                      ),
+                      child: pw.Row(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                        children: [
+                          pw.Expanded(
+                            child: pw.Text(
+                              '${item.quantidade}x ${item.nome}',
+                              style: const pw.TextStyle(fontSize: 10),
+                            ),
+                          ),
+                          pw.Text(
+                            item.preco != null
+                                ? AppUtils.formatMoney(item.preco!)
+                                : '-',
+                            style: const pw.TextStyle(fontSize: 10),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                widgets.add(pw.SizedBox(height: 10));
+              }
+            }
+
+            // Rodapé com Total Geral
+            widgets.add(pw.Divider());
+            widgets.add(
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.end,
+                children: [
+                  pw.Text(
+                    'TOTAL GERAL: ${AppUtils.formatMoney(listas.fold(0.0, (sum, item) => sum + item.precoTotal))}',
+                    style: pw.TextStyle(
+                      fontSize: 16,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            );
+
+            return widgets;
+          },
         ),
       );
 
@@ -188,12 +215,17 @@ class ExportService {
     } catch (e) {
       debugPrint('Erro ao exportar PDF: $e');
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Erro ao gerar PDF: $e')));
+        String errorMessage = 'Erro ao gerar PDF: $e';
+        if (e.toString().contains('Out of Memory')) {
+          errorMessage = 'Memória insuficiente ao gerar PDF (tente filtrar por um período menor).';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage)),
+        );
       }
     }
   }
+
 
   static Future<void> exportToCsv(
     BuildContext context,

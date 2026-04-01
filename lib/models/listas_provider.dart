@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lista_compras/services/hive_service.dart';
 import 'package:lista_compras/services/home_widget_service.dart';
+import 'package:lista_compras/models/preco_historico.dart';
 import 'lista_compras.dart';
 import 'item.dart';
 import '../services/drive_backup_service.dart';
@@ -30,6 +31,48 @@ class ListasProvider with ChangeNotifier {
         ? DateTime.parse(HiveService.obterConfiguracao<String>('ultimo_backup')!)
         : null;
     carregarListas();
+  }
+
+  /// Busca o último preço registrado para um item pelo nome
+  double? obterUltimoPreco(String nome) {
+    if (nome.trim().isEmpty) return null;
+    final nomeNormalizado = nome.trim().toLowerCase();
+    final historico = HiveService.historicoPrecosBox.get(nomeNormalizado);
+    return historico?.ultimoPreco;
+  }
+
+  /// Busca o histórico completo para um item
+  PrecoHistorico? obterHistorico(String nome) {
+    if (nome.trim().isEmpty) return null;
+    final nomeNormalizado = nome.trim().toLowerCase();
+    return HiveService.historicoPrecosBox.get(nomeNormalizado);
+  }
+
+  Future<void> adicionarPrecoAoHistorico(String nome, double preco) async {
+    if (nome.trim().isEmpty || preco <= 0) return;
+    
+    final nomeNormalizado = nome.trim().toLowerCase();
+    final box = HiveService.historicoPrecosBox;
+    
+    // Busca ou cria o histórico para este item
+    final historico = box.get(nomeNormalizado) ?? PrecoHistorico(nomeItem: nome.trim());
+    
+    historico.adicionarEntrada(preco, DateTime.now());
+    await box.put(nomeNormalizado, historico);
+  }
+
+  Future<void> finalizarLista(ListaCompras lista) async {
+    lista.finalizarLista();
+    
+    // Salva os preços dos itens marcados como comprados no histórico
+    for (var item in lista.itens) {
+      if (item.comprado && item.preco != null && item.preco! > 0) {
+        await adicionarPrecoAoHistorico(item.nome, item.preco!);
+      }
+    }
+    
+    await HiveService.salvarListaCompras(lista);
+    notifyListeners();
   }
 
   Future<void> carregarListas() async {
