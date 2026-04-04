@@ -5,6 +5,8 @@ import '../models/listas_provider.dart';
 import '../models/lista_compras.dart';
 import '../utils/app_utils.dart';
 import '../services/export_service.dart';
+import '../models/iap_provider.dart';
+import '../screens/paywall_screen.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -524,6 +526,14 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   void _showExportOptions(BuildContext context) {
+    final isPro = Provider.of<IapProvider>(context, listen: false).isPro;
+    if (!isPro) {
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const PaywallScreen()),
+      );
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       builder: (ctx) {

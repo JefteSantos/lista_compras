@@ -11,7 +11,8 @@ import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
 import 'package:lista_compras/services/ocr_service.dart';
 import 'package:lista_compras/models/item.dart';
-
+import 'package:lista_compras/models/iap_provider.dart';
+import 'package:lista_compras/screens/paywall_screen.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -296,6 +297,13 @@ class _HomeScreenState extends State<HomeScreen>
           IconButton(
             icon: const Icon(Icons.camera_alt),
             onPressed: () async {
+              final isPro = Provider.of<IapProvider>(context, listen: false).isPro;
+              if (!isPro) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const PaywallScreen()),
+                );
+                return;
+              }
               final result = await OCRService.scanList(fromCamera: true);
               if (result.isNotEmpty && mounted) {
                 _exibirConfirmacaoOCR(context, result);
