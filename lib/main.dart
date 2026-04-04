@@ -14,6 +14,7 @@ import 'services/auth_service.dart';
 import 'services/drive_backup_service.dart';
 import 'services/hive_service.dart';
 import 'services/home_widget_service.dart';
+import 'models/iap_provider.dart';
 
 /// Chave global do Navigator para acessar context no WidgetsBindingObserver.
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -45,7 +46,10 @@ void main() async {
 
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => ListasProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => ListasProvider()),
+        ChangeNotifierProvider(create: (_) => IapProvider()),
+      ],
       child: const MyApp(),
     ),
   );
