@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:lista_compras/models/listas_provider.dart';
 import 'package:lista_compras/models/lista_compras.dart';
 import 'package:lista_compras/models/item.dart';
+import 'package:lista_compras/models/categorias_provider.dart';
 import 'package:lista_compras/screens/edit_item_screen.dart';
 import 'package:lista_compras/screens/confirmation_dialog.dart';
 import 'package:flutter/services.dart';
@@ -481,14 +482,30 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
           activeColor: Colors.green,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         ),
-        title: Text(
-          item.nome,
-          style: TextStyle(
-            decoration: item.comprado ? TextDecoration.lineThrough : null,
-            color: item.comprado ? Colors.grey : Colors.black87,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        title: item.categoria != null
+            ? Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 6,
+                children: [
+                  Text(
+                    item.nome,
+                    style: TextStyle(
+                      decoration: item.comprado ? TextDecoration.lineThrough : null,
+                      color: item.comprado ? Colors.grey : Colors.black87,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  _buildCategoriaTag(item.categoria!, comprado: item.comprado),
+                ],
+              )
+            : Text(
+                item.nome,
+                style: TextStyle(
+                  decoration: item.comprado ? TextDecoration.lineThrough : null,
+                  color: item.comprado ? Colors.grey : Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -521,6 +538,26 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
               )
             : null,
         onTap: () => _adicionarOuEditarItem(context, lista, item: item),
+      ),
+    );
+  }
+
+  Widget _buildCategoriaTag(String nome, {bool comprado = false}) {
+    final cor = corDaCategoria(nome);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: comprado ? cor.withValues(alpha: 0.35) : cor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        nome,
+        style: TextStyle(
+          color: comprado ? Colors.grey.shade600 : Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.2,
+        ),
       ),
     );
   }

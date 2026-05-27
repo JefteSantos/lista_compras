@@ -33,6 +33,7 @@ class ShareCodeService {
     'co': 'comprado',
     'o':  'observacoes',
     'dm': 'dataCompra',
+    'ca': 'categoria',
   };
 
   static final _reverseKeyMap = _keyMap.map((k, v) => MapEntry(v, k));

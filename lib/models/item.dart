@@ -28,6 +28,9 @@ class Item extends HiveObject {
   @HiveField(7)
   DateTime? dataCompra;
 
+  @HiveField(8)
+  String? categoria;
+
   Item({
     required this.id,
     required this.nome,
@@ -37,6 +40,7 @@ class Item extends HiveObject {
     this.observacoes,
     required this.dataCriacao,
     this.dataCompra,
+    this.categoria,
   });
 
   double get precoTotal => (preco ?? 0) * quantidade;
@@ -50,6 +54,7 @@ class Item extends HiveObject {
     String? observacoes,
     DateTime? dataCriacao,
     DateTime? dataCompra,
+    Object? categoria = _sentinel,
   }) {
     return Item(
       id: id ?? this.id,
@@ -60,6 +65,7 @@ class Item extends HiveObject {
       observacoes: observacoes ?? this.observacoes,
       dataCriacao: dataCriacao ?? this.dataCriacao,
       dataCompra: dataCompra ?? this.dataCompra,
+      categoria: categoria == _sentinel ? this.categoria : categoria as String?,
     );
   }
 
@@ -72,6 +78,7 @@ class Item extends HiveObject {
         'observacoes': observacoes,
         'dataCriacao': dataCriacao.toIso8601String(),
         'dataCompra': dataCompra?.toIso8601String(),
+        'categoria': categoria,
       };
 
   factory Item.fromJson(Map<String, dynamic> json) => Item(
@@ -85,5 +92,9 @@ class Item extends HiveObject {
         dataCompra: json['dataCompra'] != null
             ? DateTime.parse(json['dataCompra'] as String)
             : null,
+        categoria: json['categoria'] as String?,
       );
 }
+
+// Sentinela para distinguir null explícito de "não fornecido" no copyWith
+const Object _sentinel = Object();

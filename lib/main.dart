@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import 'models/listas_provider.dart';
+import 'models/categorias_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'services/auth_service.dart';
@@ -23,12 +24,15 @@ void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  // ── Firebase / Crashlytics ────────────────────────────────────────────────
-  await Firebase.initializeApp();
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    debugPrint("Aviso: Falha ao inicializar o Firebase. Se estiver na Web, certifique-se de configurar o FirebaseOptions.");
+  }
 
-  // Em modo release: envia crashes Flutter para o Crashlytics
+  // Em modo release: envia crashes Flutter para o Crashlytics (apenas mobile)
   // Em debug: apenas imprime no console, sem poluir o painel
-  if (!kDebugMode) {
+  if (!kDebugMode && !kIsWeb) {
     FlutterError.onError =
         FirebaseCrashlytics.instance.recordFlutterFatalError;
     PlatformDispatcher.instance.onError = (error, stack) {
@@ -38,8 +42,12 @@ void main() async {
   }
   // ─────────────────────────────────────────────────────────────────────────
 
-  await HiveService.init();
-  await HomeWidgetService.init();
+  try {
+    await HiveService.init();
+    await HomeWidgetService.init();
+  } catch (e) {
+    debugPrint("Erro durante a inicialização de serviços: $e");
+  }
   Intl.defaultLocale = 'pt_BR';
 
   FlutterNativeSplash.remove();
@@ -49,6 +57,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ListasProvider()),
         ChangeNotifierProvider(create: (_) => IapProvider()),
+        ChangeNotifierProvider(create: (_) => CategoriasProvider()),
       ],
       child: const MyApp(),
     ),

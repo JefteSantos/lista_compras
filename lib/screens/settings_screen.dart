@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../models/listas_provider.dart';
+import '../models/categorias_provider.dart';
 import '../services/auth_service.dart';
 import '../services/drive_backup_service.dart';
 import 'privacy_policy_screen.dart';
@@ -197,6 +198,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               _buildSectionHeader(Icons.account_circle_outlined, 'Conta Google'),
               _buildAccountCard(),
+              const SizedBox(height: 24),
+              _buildSectionHeader(Icons.local_offer_outlined, 'Corredores / Categorias'),
+              _buildCategoriasCard(),
               const SizedBox(height: 24),
               _buildSectionHeader(Icons.cloud_outlined, 'Backup no Google Drive'),
               _buildBackupCard(),
@@ -477,6 +481,171 @@ class _SettingsScreenState extends State<SettingsScreen> {
         trailing: const Icon(Icons.chevron_right),
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
+        ),
+      ),
+    );
+  }
+
+  // ─── Categorias ───────────────────────────────────────────────────────────
+
+  Widget _buildCategoriasCard() {
+    return Consumer<CategoriasProvider>(
+      builder: (context, provider, _) {
+        final categorias = provider.categorias;
+        return Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Text(
+                    'Organize seus itens por corredor do supermercado.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                ),
+                const Divider(height: 12),
+                // Lista de categorias existentes
+                ...categorias.map(
+                  (cat) => Dismissible(
+                    key: Key(cat.id),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 16),
+                      color: Colors.red.shade400,
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    confirmDismiss: (_) => _confirmarRemocaoCategoria(cat.nome),
+                    onDismissed: (_) => provider.remover(cat.id),
+                    child: ListTile(
+                      dense: true,
+                      leading: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: corDaCategoria(cat.nome),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      title: Text(cat.nome),
+                      trailing: const Icon(
+                        Icons.drag_handle,
+                        color: Colors.grey,
+                        size: 18,
+                      ),
+                    ),
+                  ),
+                ),
+                // Botão adicionar
+                ListTile(
+                  dense: true,
+                  leading: const Icon(
+                    Icons.add_circle_outline,
+                    color: Colors.deepPurple,
+                  ),
+                  title: const Text(
+                    'Adicionar categoria',
+                    style: TextStyle(color: Colors.deepPurple),
+                  ),
+                  onTap: () => _dialogAdicionarCategoria(context, provider),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<bool> _confirmarRemocaoCategoria(String nome) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remover categoria'),
+        content: Text(
+          'Remover "$nome"?\n\nItens que já usam esta categoria manterão o nome, mas ela não aparecerá mais na lista de opções.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('CANCELAR'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('REMOVER'),
+          ),
+        ],
+      ),
+    );
+    return result == true;
+  }
+
+  Future<void> _dialogAdicionarCategoria(
+    BuildContext context,
+    CategoriasProvider provider,
+  ) async {
+    final controller = TextEditingController();
+    String? erro;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setStateDialog) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.local_offer_outlined, color: Colors.deepPurple),
+              SizedBox(width: 8),
+              Text('Nova Categoria'),
+            ],
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              labelText: 'Nome da categoria',
+              hintText: 'Ex: Congelados, Pet Shop...',
+              border: const OutlineInputBorder(),
+              errorText: erro,
+            ),
+            onChanged: (_) {
+              if (erro != null) setStateDialog(() => erro = null);
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('CANCELAR'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final nome = controller.text.trim();
+                if (nome.isEmpty) {
+                  setStateDialog(() => erro = 'Digite um nome');
+                  return;
+                }
+                if (provider.existeNome(nome)) {
+                  setStateDialog(() => erro = 'Categoria já existe');
+                  return;
+                }
+                await provider.adicionar(nome);
+                if (ctx.mounted) Navigator.of(ctx).pop();
+              },
+              child: const Text('CRIAR'),
+            ),
+          ],
         ),
       ),
     );

@@ -55,6 +55,18 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+
+    applicationVariants.all {
+        val variant = this
+        if (variant.buildType.name == "release") {
+            variant.outputs.all {
+                val output = this as? com.android.build.gradle.internal.api.ApkVariantOutputImpl
+                if (output != null) {
+                    output.outputFileName = "NaoEsquece_v${variant.versionName}.apk"
+                }
+            }
+        }
+    }
 }
 
 kotlin {

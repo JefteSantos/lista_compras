@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'confirmation_dialog.dart';
 import '../models/item.dart';
+import '../models/categorias_provider.dart';
 import 'package:lista_compras/models/listas_provider.dart';
 import 'package:lista_compras/utils/app_utils.dart';
 import 'package:intl/intl.dart';
@@ -24,6 +25,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
   late TextEditingController _precoController;
   late TextEditingController _observacoesController;
 
+  String? _categoriaSelecionada;
   bool _isEditing = false;
 
   @override
@@ -43,6 +45,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
     _observacoesController = TextEditingController(
       text: widget.item?.observacoes ?? '',
     );
+    _categoriaSelecionada = widget.item?.categoria;
 
     // Bug 5 fix: listeners para o Preview atualizar em tempo real
     _nomeController.addListener(() => setState(() {}));
@@ -116,6 +119,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
       dataCriacao: widget.item?.dataCriacao ?? DateTime.now(),
       comprado: widget.item?.comprado ?? false,
       dataCompra: widget.item?.dataCompra,
+      categoria: _categoriaSelecionada,
     );
 
     Navigator.of(context).pop(item);
@@ -223,6 +227,91 @@ class _EditItemScreenState extends State<EditItemScreen> {
                 textCapitalization: TextCapitalization.sentences,
               ),
             ),
+            const SizedBox(height: 16),
+
+            // ----------- CATEGORIA (CORREDOR) -----------
+            Consumer<CategoriasProvider>(
+              builder: (context, categoriasProvider, _) {
+                final categorias = categoriasProvider.categorias;
+                // Garante que a categoria salva ainda existe; caso contrário, limpa
+                if (_categoriaSelecionada != null &&
+                    !categorias.any((c) => c.nome == _categoriaSelecionada)) {
+                  WidgetsBinding.instance.addPostFrameCallback(
+                    (_) => setState(() => _categoriaSelecionada = null),
+                  );
+                }
+                return InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Corredor / Categoria (opcional)',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.local_offer_outlined),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String?>(
+                      value: _categoriaSelecionada,
+                      isExpanded: true,
+                      hint: const Text('Nenhuma'),
+                      items: [
+                        // Opção "Nenhuma"
+                        const DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text('Nenhuma', style: TextStyle(color: Colors.grey)),
+                        ),
+                        // Categorias existentes
+                        ...categorias.map(
+                          (cat) => DropdownMenuItem<String?>(
+                            value: cat.nome,
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    color: corDaCategoria(cat.nome),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(cat.nome),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // Opção para criar nova categoria
+                        const DropdownMenuItem<String?>(
+                          value: '__nova__',
+                          child: Row(
+                            children: [
+                              Icon(Icons.add, size: 16, color: Colors.deepPurple),
+                              SizedBox(width: 6),
+                              Text(
+                                'Nova categoria...',
+                                style: TextStyle(color: Colors.deepPurple),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) async {
+                        if (value == '__nova__') {
+                          // Abre dialog para criar nova categoria
+                          final novoNome = await _dialogNovaCategoriaInline(
+                            context,
+                            categoriasProvider,
+                          );
+                          if (novoNome != null && mounted) {
+                            setState(() => _categoriaSelecionada = novoNome);
+                          }
+                        } else {
+                          setState(() => _categoriaSelecionada = value);
+                        }
+                      },
+                    ),
+                  ),
+                );
+              },
+            ),
             const SizedBox(height: 24),
 
             Container(
@@ -241,11 +330,19 @@ class _EditItemScreenState extends State<EditItemScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    _nomeController.text.isEmpty
-                        ? 'Nome do item'
-                        : _nomeController.text,
-                    style: const TextStyle(fontSize: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _nomeController.text.isEmpty
+                              ? 'Nome do item'
+                              : _nomeController.text,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                      if (_categoriaSelecionada != null) ...
+                        [_buildCategoriaTag(_categoriaSelecionada!)],
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -364,6 +461,89 @@ class _EditItemScreenState extends State<EditItemScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+  /// Constrói a tag visual da categoria.
+  Widget _buildCategoriaTag(String nome) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: corDaCategoria(nome),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        nome,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+
+  /// Dialog para criar uma nova categoria inline, sem sair da tela.
+  Future<String?> _dialogNovaCategoriaInline(
+    BuildContext context,
+    CategoriasProvider provider,
+  ) async {
+    final controller = TextEditingController();
+    String? erro;
+
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setStateDialog) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.local_offer_outlined, color: Colors.deepPurple),
+              SizedBox(width: 8),
+              Text('Nova Categoria'),
+            ],
+          ),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              labelText: 'Nome da categoria',
+              hintText: 'Ex: Congelados, Pet Shop...',
+              border: const OutlineInputBorder(),
+              errorText: erro,
+            ),
+            onChanged: (_) {
+              if (erro != null) setStateDialog(() => erro = null);
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(null),
+              child: const Text('CANCELAR'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final nome = controller.text.trim();
+                if (nome.isEmpty) {
+                  setStateDialog(() => erro = 'Digite um nome');
+                  return;
+                }
+                if (provider.existeNome(nome)) {
+                  setStateDialog(() => erro = 'Categoria já existe');
+                  return;
+                }
+                await provider.adicionar(nome);
+                if (ctx.mounted) Navigator.of(ctx).pop(nome);
+              },
+              child: const Text('CRIAR'),
+            ),
+          ],
+        ),
       ),
     );
   }
