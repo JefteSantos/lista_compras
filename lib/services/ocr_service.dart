@@ -1,14 +1,25 @@
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../models/item.dart';
 
 class OCRService {
-  static final _textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+  static TextRecognizer? _textRecognizer;
   static final _picker = ImagePicker();
+
+  static TextRecognizer get _recognizer {
+    _textRecognizer ??= TextRecognizer(script: TextRecognitionScript.latin);
+    return _textRecognizer!;
+  }
 
   /// Abre a câmera ou galeria para selecionar uma imagem e extrair os itens
   static Future<List<Item>> scanList({bool fromCamera = true}) async {
+    if (kIsWeb) {
+      debugPrint('[OCRService] Escaneamento não suportado na Web.');
+      return [];
+    }
+
     final XFile? image = await _picker.pickImage(
       source: fromCamera ? ImageSource.camera : ImageSource.gallery,
     );
@@ -16,7 +27,7 @@ class OCRService {
     if (image == null) return [];
 
     final inputImage = InputImage.fromFilePath(image.path);
-    final RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
+    final RecognizedText recognizedText = await _recognizer.processImage(inputImage);
     
     return _parseRecognizedText(recognizedText.text);
   }
@@ -56,6 +67,6 @@ class OCRService {
   }
 
   static void dispose() {
-    _textRecognizer.close();
+    _textRecognizer?.close();
   }
 }

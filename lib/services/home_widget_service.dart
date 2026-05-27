@@ -12,13 +12,26 @@ class HomeWidgetService {
   static const _appGroupId = 'com.culpadoturing.naoesquece';
   static const _qualifiedAndroidName = 'ListaComprasWidget';
 
+  /// Retorna verdadeiro apenas se estiver rodando em Android ou iOS nativo.
+  static bool get _isSupported {
+    if (kIsWeb) return false;
+    return defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
+  }
+
   /// Inicializa o home_widget. Deve ser chamado no main().
   static Future<void> init() async {
-    await HomeWidget.setAppGroupId(_appGroupId);
+    if (!_isSupported) return;
+    try {
+      await HomeWidget.setAppGroupId(_appGroupId);
+    } catch (e) {
+      debugPrint('[HomeWidget] Erro ao definir AppGroupId: $e');
+    }
   }
 
   /// Atualiza o widget com os dados mais recentes das listas.
   static Future<void> atualizar(List<ListaCompras> listas) async {
+    if (!_isSupported) return;
     try {
       final ativas = listas.where((l) => !l.finalizada).toList();
       final totalItens = ativas.fold<int>(

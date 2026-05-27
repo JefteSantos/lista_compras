@@ -2,29 +2,34 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../models/item.dart';
 import '../models/lista_compras.dart';
 import '../models/preco_historico.dart';
+import '../models/categoria_item.dart';
 
 class HiveService {
   static const _listaComprasBoxName = 'listas_compras';
   static const _itemBoxName = 'itens';
   static const _configBoxName = 'configuracoes';
   static const _historicoPrecosBoxName = 'historico_precos';
+  static const _categoriasBoxName = 'categorias';
 
   static Box<ListaCompras>? _listaComprasBox;
   static Box<Item>? _itemBox;
   static Box? _configBox;
   static Box<PrecoHistorico>? _historicoPrecosBox;
+  static Box<CategoriaItem>? _categoriasBox;
 
   static Future<void> init({
     Box<ListaCompras>? listaBox,
     Box<Item>? itemBox,
     Box? configBox,
     Box<PrecoHistorico>? historicoBox,
+    Box<CategoriaItem>? categoriasBox,
   }) async {
     if (listaBox != null && itemBox != null && configBox != null && historicoBox != null) {
       _listaComprasBox = listaBox;
       _itemBox = itemBox;
       _configBox = configBox;
       _historicoPrecosBox = historicoBox;
+      _categoriasBox = categoriasBox;
       return;
     }
 
@@ -33,11 +38,13 @@ class HiveService {
     if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(ListaComprasAdapter());
     if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(PrecoHistoricoAdapter());
     if (!Hive.isAdapterRegistered(3)) Hive.registerAdapter(PrecoEntradaAdapter());
+    if (!Hive.isAdapterRegistered(4)) Hive.registerAdapter(CategoriaItemAdapter());
     
     _listaComprasBox = await Hive.openBox<ListaCompras>(_listaComprasBoxName);
     _itemBox = await Hive.openBox<Item>(_itemBoxName);
     _configBox = await Hive.openBox(_configBoxName);
     _historicoPrecosBox = await Hive.openBox<PrecoHistorico>(_historicoPrecosBoxName);
+    _categoriasBox = await Hive.openBox<CategoriaItem>(_categoriasBoxName);
   }
 
   static Box<ListaCompras> get listaComprasBox {
@@ -140,6 +147,16 @@ class HiveService {
     await _itemBox?.close();
     await _configBox?.close();
     await _historicoPrecosBox?.close();
+    await _categoriasBox?.close();
+  }
+
+  static Box<CategoriaItem> get categoriasBox {
+    if (_categoriasBox == null) {
+      throw Exception(
+        'Hive não foi inicializado. Chame HiveService.init() primeiro.',
+      );
+    }
+    return _categoriasBox!;
   }
 
   static int get totalListas => listaComprasBox.length;
