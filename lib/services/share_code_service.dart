@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:archive/archive.dart';
 import 'dart:math';
 
 import '../models/lista_compras.dart';
@@ -59,7 +59,7 @@ class ShareCodeService {
     _stripDesnecessario(v2Map, isRaiz: true);
 
     final jsonStr = jsonEncode(v2Map);
-    final compressed = gzip.encode(utf8.encode(jsonStr));
+    final compressed = GZipEncoder().encode(utf8.encode(jsonStr))!;
 
     // Limite de 16KB compactado para garantir transmissão segura
     if (compressed.length > 16 * 1024) {
@@ -210,7 +210,7 @@ class ShareCodeService {
       }
 
       final compressed = base64Url.decode(encoded);
-      final jsonStr = utf8.decode(gzip.decode(compressed));
+      final jsonStr = utf8.decode(GZipDecoder().decodeBytes(compressed));
 
       var json = jsonDecode(jsonStr) as Map<String, dynamic>;
 

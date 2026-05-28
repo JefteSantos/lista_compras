@@ -7,10 +7,10 @@ class AuthService {
   AuthService._();
 
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
-    // No Android, o clientId é lido automaticamente do google-services.json.
-    // Explicitá-lo aqui (especialmente com o ID de Android) causa o Erro 10.
-    clientId: null, 
-    serverClientId: '958891505864-gpprnfpj92rnh1o1kp9igon9cis9g1pc.apps.googleusercontent.com',
+    // No Web, o clientId é obrigatório. No Android, ele deve ser null para evitar conflito com o google-services.json.
+    clientId: kIsWeb ? '958891505864-gpprnfpj92rnh1o1kp9igon9cis9g1pc.apps.googleusercontent.com' : null, 
+    // O serverClientId não é suportado na Web e deve ser passado apenas em outras plataformas (como Android).
+    serverClientId: kIsWeb ? null : '958891505864-gpprnfpj92rnh1o1kp9igon9cis9g1pc.apps.googleusercontent.com',
     scopes: [
       'https://www.googleapis.com/auth/drive.appdata',
       'email',

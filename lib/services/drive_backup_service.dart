@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:archive/archive.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:googleapis/drive/v3.dart' as drive;
@@ -26,9 +26,11 @@ class DriveBackupService {
 
   // ─── API privada ────────────────────────────────────────────────────────────
 
-  static Future<drive.DriveApi?> _getDriveApi() async {
+  static Future<drive.DriveApi?> _getDriveApi({bool forceRefresh = false}) async {
     var account = AuthService.currentUser;
-    account ??= await AuthService.signInSilently();
+    if (account == null || forceRefresh) {
+      account = await AuthService.signInSilently();
+    }
     if (account == null) return null;
 
     final authHeaders = await account.authHeaders;
@@ -40,16 +42,31 @@ class DriveBackupService {
   /// Serializa todas as [listas] em JSON comprimido (GZIP) e faz upload
   /// para a pasta appDataFolder do Drive do usuário autenticado.
   static Future<void> uploadBackup(List<ListaCompras> listas) async {
-    final api = await _getDriveApi();
-    if (api == null) throw Exception('Usuário não autenticado no Google.');
+    try {
+      final api = await _getDriveApi();
+      if (api == null) throw Exception('Usuário não autenticado no Google.');
+      await _uploadBackupInternal(listas, api);
+    } catch (e) {
+      if (e.toString().contains('401') || e.toString().contains('invalid authentication credentials')) {
+        debugPrint('[DriveBackup] Token expirado ou inválido. Tentando renovar silenciosamente...');
+        final api = await _getDriveApi(forceRefresh: true);
+        if (api != null) {
+          await _uploadBackupInternal(listas, api);
+          return;
+        }
+      }
+      rethrow;
+    }
+  }
 
+  static Future<void> _uploadBackupInternal(List<ListaCompras> listas, drive.DriveApi api) async {
     final payload = jsonEncode({
       'versao': 1,
       'dataBackup': DateTime.now().toIso8601String(),
       'listas': listas.map((l) => l.toJson()).toList(),
     });
 
-    final compressed = gzip.encode(utf8.encode(payload));
+    final compressed = GZipEncoder().encode(utf8.encode(payload))!;
     final stream = Stream.fromIterable([compressed]);
     final media = drive.Media(
       stream,
@@ -99,9 +116,23 @@ class DriveBackupService {
   /// Baixa o backup do Drive e retorna as listas deserializadas.
   /// Retorna null se o usuário não estiver autenticado ou não houver backup.
   static Future<BackupResult?> downloadBackup() async {
-    final api = await _getDriveApi();
-    if (api == null) return null;
+    try {
+      final api = await _getDriveApi();
+      if (api == null) return null;
+      return await _downloadBackupInternal(api);
+    } catch (e) {
+      if (e.toString().contains('401') || e.toString().contains('invalid authentication credentials')) {
+        debugPrint('[DriveBackup] Token expirado ou inválido. Tentando renovar silenciosamente...');
+        final api = await _getDriveApi(forceRefresh: true);
+        if (api != null) {
+          return await _downloadBackupInternal(api);
+        }
+      }
+      rethrow;
+    }
+  }
 
+  static Future<BackupResult?> _downloadBackupInternal(drive.DriveApi api) async {
     final existing = await api.files.list(
       spaces: 'appDataFolder',
       q: "name = '$_backupFileName'",
@@ -117,7 +148,7 @@ class DriveBackupService {
     ) as drive.Media;
 
     final bytes = await media.stream.expand((b) => b).toList();
-    final jsonStr = utf8.decode(gzip.decode(bytes));
+    final jsonStr = utf8.decode(GZipDecoder().decodeBytes(bytes));
     final data = jsonDecode(jsonStr) as Map<String, dynamic>;
 
     final listas = (data['listas'] as List<dynamic>)

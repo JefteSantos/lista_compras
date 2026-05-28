@@ -45,10 +45,19 @@ class CategoriasProvider with ChangeNotifier {
     _carregar();
   }
 
+  int _compararCategorias(CategoriaItem a, CategoriaItem b) {
+    final oA = a.ordem ?? 0;
+    final oB = b.ordem ?? 0;
+    if (oA != oB) {
+      return oA.compareTo(oB);
+    }
+    return a.nome.compareTo(b.nome);
+  }
+
   void _carregar() {
     final box = HiveService.categoriasBox;
     _categorias = box.values.toList()
-      ..sort((a, b) => a.nome.compareTo(b.nome));
+      ..sort(_compararCategorias);
 
     // Popula com as categorias padrão na primeira execução
     if (_categorias.isEmpty) {
@@ -58,12 +67,13 @@ class CategoriasProvider with ChangeNotifier {
 
   Future<void> _popularPadrao() async {
     const uuid = Uuid();
-    for (final nome in _categoriasPadrao) {
-      final cat = CategoriaItem(id: uuid.v4(), nome: nome);
+    for (int i = 0; i < _categoriasPadrao.length; i++) {
+      final nome = _categoriasPadrao[i];
+      final cat = CategoriaItem(id: uuid.v4(), nome: nome, ordem: i);
       await HiveService.categoriasBox.put(cat.id, cat);
     }
     _categorias = HiveService.categoriasBox.values.toList()
-      ..sort((a, b) => a.nome.compareTo(b.nome));
+      ..sort(_compararCategorias);
     notifyListeners();
   }
 
@@ -78,10 +88,29 @@ class CategoriasProvider with ChangeNotifier {
     if (jaExiste) return;
 
     const uuid = Uuid();
-    final cat = CategoriaItem(id: uuid.v4(), nome: nomeTrimmed);
+    final cat = CategoriaItem(
+      id: uuid.v4(),
+      nome: nomeTrimmed,
+      ordem: _categorias.length,
+    );
     await HiveService.categoriasBox.put(cat.id, cat);
     _categorias = HiveService.categoriasBox.values.toList()
-      ..sort((a, b) => a.nome.compareTo(b.nome));
+      ..sort(_compararCategorias);
+    notifyListeners();
+  }
+
+  Future<void> reordenar(int oldIndex, int newIndex) async {
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+    final item = _categorias.removeAt(oldIndex);
+    _categorias.insert(newIndex, item);
+
+    // Atualiza o índice de ordem de todas as categorias na lista e persiste no Hive
+    for (int i = 0; i < _categorias.length; i++) {
+      _categorias[i].ordem = i;
+      await _categorias[i].save();
+    }
     notifyListeners();
   }
 
