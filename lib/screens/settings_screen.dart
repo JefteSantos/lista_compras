@@ -116,7 +116,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() => _ultimoBackup = agora);
       _setStatus('✅ Backup de ${listas.length} lista(s) realizado com sucesso!');
     } catch (e) {
-      _setStatus('Erro no backup: $e', error: true);
+      if (e.toString().contains('401') || e.toString().contains('invalid authentication credentials')) {
+        await AuthService.signOut();
+        if (mounted) {
+          setState(() {
+            _currentUser = null;
+          });
+          _setStatus('Sessão expirada por segurança. Entre com sua conta Google novamente para tentar de novo.', error: true);
+        }
+      } else {
+        _setStatus('Erro no backup: $e', error: true);
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -177,7 +187,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     } catch (e) {
-      _setStatus('Erro ao restaurar: $e', error: true);
+      if (e.toString().contains('401') || e.toString().contains('invalid authentication credentials')) {
+        await AuthService.signOut();
+        if (mounted) {
+          setState(() {
+            _currentUser = null;
+          });
+          _setStatus('Sessão expirada por segurança. Entre com sua conta Google novamente para tentar de novo.', error: true);
+        }
+      } else {
+        _setStatus('Erro ao restaurar: $e', error: true);
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -290,13 +310,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         CircleAvatar(
           radius: 26,
-          backgroundImage: _currentUser?.photoUrl != null
-              ? NetworkImage(_currentUser!.photoUrl!)
-              : null,
           backgroundColor: Colors.deepPurple.shade100,
-          child: _currentUser?.photoUrl == null
-              ? const Icon(Icons.person, color: Colors.deepPurple)
-              : null,
+          child: _currentUser?.photoUrl != null
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(26),
+                  child: Image.network(
+                    _currentUser!.photoUrl!,
+                    width: 52,
+                    height: 52,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.person, color: Colors.deepPurple, size: 26);
+                    },
+                  ),
+                )
+              : const Icon(Icons.person, color: Colors.deepPurple, size: 26),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -508,37 +536,73 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const Divider(height: 12),
-                // Lista de categorias existentes
-                ...categorias.map(
-                  (cat) => Dismissible(
-                    key: Key(cat.id),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 16),
-                      color: Colors.red.shade400,
-                      child: const Icon(Icons.delete, color: Colors.white),
-                    ),
-                    confirmDismiss: (_) => _confirmarRemocaoCategoria(cat.nome),
-                    onDismissed: (_) => provider.remover(cat.id),
-                    child: ListTile(
-                      dense: true,
-                      leading: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: BoxDecoration(
-                          color: corDaCategoria(cat.nome),
-                          shape: BoxShape.circle,
+                // Lista de categorias existentes com suporte a arrastar para reordenar
+                ReorderableListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: categorias.length,
+                  onReorder: provider.reordenar,
+                  buildDefaultDragHandles: false,
+                  itemBuilder: (context, index) {
+                    final cat = categorias[index];
+                    return Dismissible(
+                      key: Key(cat.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 16),
+                        color: Colors.red.shade400,
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      confirmDismiss: (_) => _confirmarRemocaoCategoria(cat.nome),
+                      onDismissed: (_) => provider.remover(cat.id),
+                      child: ListTile(
+                        dense: true,
+                        leading: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: corDaCategoria(cat.nome),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        title: Text(cat.nome),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.redAccent,
+                                size: 20,
+                              ),
+                              onPressed: () async {
+                                final confirmed = await _confirmarRemocaoCategoria(cat.nome);
+                                if (confirmed) {
+                                  provider.remover(cat.id);
+                                }
+                              },
+                              tooltip: 'Excluir Categoria',
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.zero,
+                            ),
+                            const SizedBox(width: 12),
+                            ReorderableDragStartListener(
+                              index: index,
+                              child: const Padding(
+                                padding: EdgeInsets.all(4.0),
+                                child: Icon(
+                                  Icons.drag_handle,
+                                  color: Colors.grey,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      title: Text(cat.nome),
-                      trailing: const Icon(
-                        Icons.drag_handle,
-                        color: Colors.grey,
-                        size: 18,
-                      ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
                 // Botão adicionar
                 ListTile(

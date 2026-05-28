@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "958891505864-fblkajm1hs1t57bomq1sgpbh8sgkl9ph.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.naoesquece.culpadoturing",
+            "certificate_hash": "93b9f1ca913d16f70d74f0eefa11eb1e69f56f1c"
+          }
+        },
+        {
           "client_id": "958891505864-mijbb5atf0eto74baiql55g7912cbavs.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

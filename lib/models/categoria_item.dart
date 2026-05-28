@@ -10,5 +10,8 @@ class CategoriaItem extends HiveObject {
   @HiveField(1)
   String nome;
 
-  CategoriaItem({required this.id, required this.nome});
+  @HiveField(2)
+  int? ordem;
+
+  CategoriaItem({required this.id, required this.nome, this.ordem});
 }
