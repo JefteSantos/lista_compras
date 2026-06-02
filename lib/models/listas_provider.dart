@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lista_compras/services/hive_service.dart';
 import 'package:lista_compras/services/home_widget_service.dart';
 import 'package:lista_compras/models/preco_historico.dart';
+import 'package:uuid/uuid.dart';
 import 'lista_compras.dart';
 import 'item.dart';
 import '../services/drive_backup_service.dart';
@@ -118,6 +119,27 @@ class ListasProvider with ChangeNotifier {
     await carregarListas();
   }
 
+  /// Cria uma cópia da lista com novos IDs e itens desmarcados.
+  Future<ListaCompras> duplicarLista(ListaCompras original) async {
+    final novaLista = ListaCompras(
+      id: const Uuid().v4(),
+      nome: '${original.nome} (cópia)',
+      descricao: original.descricao,
+      dataCriacao: DateTime.now(),
+      itens: original.itens.map((item) => Item(
+        id: const Uuid().v4(),
+        nome: item.nome,
+        quantidade: item.quantidade,
+        preco: item.preco,
+        observacoes: item.observacoes,
+        dataCriacao: DateTime.now(),
+        categoria: item.categoria,
+      )).toList(),
+    );
+    await adicionarLista(novaLista);
+    return novaLista;
+  }
+
   Future<void> adicionarItem(ListaCompras lista, Item item) async {
     lista.adicionarItem(item);
     // Bug 2 fix: garante persistência explícita, independente de isInBox
@@ -193,6 +215,26 @@ class ListasProvider with ChangeNotifier {
       _lastBackupError = e.toString();
       notifyListeners();
     }
+  }
+
+  /// Retorna a última categoria usada para um item com este nome,
+  /// procurando em todas as listas (mais recentes primeiro).
+  /// Retorna null se nunca foi categorizado.
+  String? obterUltimaCategoria(String nomeItem) {
+    final nomeNorm = nomeItem.trim().toLowerCase();
+    if (nomeNorm.isEmpty) return null;
+
+    // Percorre listas da mais recente para a mais antiga
+    for (final lista in _listas) {
+      for (final item in lista.itens) {
+        if (item.nome.trim().toLowerCase() == nomeNorm &&
+            item.categoria != null &&
+            item.categoria!.isNotEmpty) {
+          return item.categoria;
+        }
+      }
+    }
+    return null;
   }
 }
 

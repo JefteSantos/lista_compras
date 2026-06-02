@@ -12,7 +12,7 @@ class PaywallScreen extends StatefulWidget {
 class _PaywallScreenState extends State<PaywallScreen> {
   bool _isLoading = false;
 
-  void _comprar(BuildContext context) async {
+  void _comprar() async {
     setState(() => _isLoading = true);
     final iap = Provider.of<IapProvider>(context, listen: false);
     
@@ -124,7 +124,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
               SizedBox(
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : () => _comprar(context),
+                  onPressed: _isLoading ? null : () => _comprar(),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
                     foregroundColor: Colors.white,

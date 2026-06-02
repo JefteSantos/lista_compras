@@ -27,6 +27,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
 
   String? _categoriaSelecionada;
   bool _isEditing = false;
+  String _ultimoNomeSugerido = ''; // evita sugestão repetida para o mesmo nome
 
   @override
   void initState() {
@@ -48,10 +49,44 @@ class _EditItemScreenState extends State<EditItemScreen> {
     _categoriaSelecionada = widget.item?.categoria;
 
     // Bug 5 fix: listeners para o Preview atualizar em tempo real
-    _nomeController.addListener(() => setState(() {}));
+    _nomeController.addListener(_onNomeChanged);
     _quantidadeController.addListener(() => setState(() {}));
     _precoController.addListener(() => setState(() {}));
     _observacoesController.addListener(() => setState(() {}));
+  }
+
+  /// Listener do campo nome: atualiza preview e sugere categoria.
+  void _onNomeChanged() {
+    setState(() {});
+
+    // Só sugere para itens novos e se não tem categoria selecionada
+    if (_isEditing) return;
+    final nome = _nomeController.text.trim();
+    if (nome.isEmpty || nome.length < 2) return;
+    if (nome.toLowerCase() == _ultimoNomeSugerido.toLowerCase()) return;
+
+    final provider = Provider.of<ListasProvider>(context, listen: false);
+    final categoriaSugerida = provider.obterUltimaCategoria(nome);
+
+    if (categoriaSugerida != null && _categoriaSelecionada == null) {
+      _ultimoNomeSugerido = nome;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('"$nome" já foi em "$categoriaSugerida"'),
+          action: SnackBarAction(
+            label: 'USAR',
+            textColor: Colors.white,
+            onPressed: () {
+              setState(() => _categoriaSelecionada = categoriaSugerida);
+            },
+          ),
+          backgroundColor: Colors.deepPurple,
+          duration: const Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
