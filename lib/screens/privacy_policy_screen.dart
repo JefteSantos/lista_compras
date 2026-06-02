@@ -1,119 +1,102 @@
 import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
-class PrivacyPolicyScreen extends StatelessWidget {
+/// Tela que carrega a Política de Privacidade do GitHub Pages
+/// dentro do app via WebView, conforme exigido pela Play Store.
+class PrivacyPolicyScreen extends StatefulWidget {
   const PrivacyPolicyScreen({super.key});
+
+  static const String privacyUrl =
+      'https://jeftesantos.github.io/lista_compras/';
+
+  @override
+  State<PrivacyPolicyScreen> createState() => _PrivacyPolicyScreenState();
+}
+
+class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
+  late final WebViewController _controller;
+  bool _isLoading = true;
+  bool _hasError = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (_) {
+            if (mounted) {
+              setState(() => _isLoading = true);
+            }
+          },
+          onPageFinished: (_) {
+            if (mounted) {
+              setState(() => _isLoading = false);
+            }
+          },
+          onWebResourceError: (_) {
+            if (mounted) {
+              setState(() {
+                _hasError = true;
+                _isLoading = false;
+              });
+            }
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(PrivacyPolicyScreen.privacyUrl));
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Política de Privacidade')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: const [
-          _Section(
-            title: 'Não Esquece! — Política de Privacidade',
-            body:
-                'Esta Política de Privacidade descreve como o aplicativo "Não Esquece!" '
-                'trata os seus dados pessoais. Leia com atenção.',
-          ),
-          _Section(
-            title: '1. Dados Coletados',
-            body:
-                'O aplicativo NÃO coleta nenhum dado pessoal em servidores próprios. '
-                'Todos os dados inseridos (listas de compras, itens, preços) são '
-                'armazenados exclusivamente:\n\n'
-                '• No armazenamento local do seu dispositivo (Hive/SQLite).\n'
-                '• No seu próprio Google Drive (pasta privada do app), '
-                'caso você opte por ativar o backup.',
-          ),
-          _Section(
-            title: '2. Google Drive e Google Sign-In',
-            body:
-                'Se você optar por fazer backup, o aplicativo solicitará acesso '
-                'à sua conta Google com o escopo "drive.appdata". Este escopo '
-                'permite salvar arquivos apenas na pasta oculta e privada do app '
-                'no seu Google Drive.\n\n'
-                'Nenhum outro dado da sua conta Google é acessado. '
-                'Os arquivos de backup não ficam visíveis na interface normal '
-                'do Google Drive.',
-          ),
-          _Section(
-            title: '3. Compartilhamento de Dados',
-            body:
-                'O aplicativo NÃO compartilha seus dados com terceiros. '
-                'Os códigos de compartilhamento de listas são gerados '
-                'localmente no seu dispositivo e trafegam apenas pelos '
-                'canais que você escolher (WhatsApp, SMS, e-mail, etc.).',
-          ),
-          _Section(
-            title: '4. Armazenamento e Segurança',
-            body:
-                'Seus dados ficam sob controle exclusivo seu:\n\n'
-                '• Dados locais: armazenados no seu dispositivo.\n'
-                '• Backup: na sua conta Google Drive, protegida pelas '
-                'políticas de segurança do Google.\n\n'
-                'Não temos acesso, nem capacidade de acessar, seus dados pessoais.',
-          ),
-          _Section(
-            title: '5. Exclusão de Dados',
-            body:
-                'Para excluir seus dados:\n\n'
-                '• Dados locais: desinstale o aplicativo.\n'
-                '• Backup no Drive: acesse drive.google.com/drive/appdata '
-                'e exclua o arquivo "nao_esquece_backup.json".',
-          ),
-          _Section(
-            title: '6. Alterações nesta Política',
-            body:
-                'Podemos atualizar esta política periodicamente. '
-                'Atualizações relevantes serão comunicadas dentro do próprio app.',
-          ),
-          _Section(
-            title: '7. Contato',
-            body:
-                'Dúvidas sobre privacidade? Entre em contato pelo e-mail '
-                'informado na página do app na Play Store.',
-          ),
-          SizedBox(height: 32),
-          Center(
-            child: Text(
-              'Última atualização: março de 2026',
-              style: TextStyle(color: Colors.grey, fontSize: 12),
-            ),
-          ),
-          SizedBox(height: 16),
-        ],
+      appBar: AppBar(
+        title: const Text('Política de Privacidade'),
       ),
-    );
-  }
-}
-
-class _Section extends StatelessWidget {
-  final String title;
-  final String body;
-
-  const _Section({required this.title, required this.body});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.deepPurple,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            body,
-            style: const TextStyle(fontSize: 14, height: 1.6, color: Colors.black87),
-          ),
+          if (_hasError)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.wifi_off, size: 64, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Não foi possível carregar a página.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Verifique sua conexão com a internet.',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _hasError = false;
+                          _isLoading = true;
+                        });
+                        _controller.loadRequest(
+                          Uri.parse(PrivacyPolicyScreen.privacyUrl),
+                        );
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Tentar novamente'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            WebViewWidget(controller: _controller),
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator()),
         ],
       ),
     );

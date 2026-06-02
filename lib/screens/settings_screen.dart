@@ -8,6 +8,7 @@ import '../models/categorias_provider.dart';
 import '../models/theme_provider.dart';
 import '../services/auth_service.dart';
 import '../services/drive_backup_service.dart';
+import '../l10n/generated/app_localizations.dart';
 import 'privacy_policy_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -204,37 +205,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> _restaurarBackupAntigo() async {
+    if (_currentUser == null) {
+      _setStatus(AppLocalizations.of(context)!.backupLoginRequired, error: true);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    _setStatus('Buscando revisão anterior do Drive (Recuperação de Emergência)...');
+
+    try {
+      final result = await DriveBackupService.downloadPreviousRevisionBackup();
+      if (result == null) {
+        _setStatus('Nenhuma versão antiga encontrada no histórico do Google Drive.', error: true);
+        return;
+      }
+      if (mounted) {
+        // Como é recuperação de emergência, forçamos a substituição (ou mesclamos se for mais seguro).
+        // Substituir é mais garantido para voltar o estado exato.
+        await Provider.of<ListasProvider>(context, listen: false)
+            .importarListas(result.listas, substituir: true);
+        _setStatus(
+          '✅ ${result.listas.length} lista(s) antigas recuperadas com sucesso!',
+        );
+      }
+    } catch (e) {
+      if (e.toString().contains('401') || e.toString().contains('invalid authentication credentials')) {
+        await AuthService.signOut();
+        if (mounted) {
+          setState(() {
+            _currentUser = null;
+          });
+          _setStatus('Sessão expirada. Faça login novamente.', error: true);
+        }
+      } else {
+        _setStatus('Erro ao recuperar versão antiga: $e', error: true);
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   // ─── UI ───────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Configurações'),
+        title: Text(AppLocalizations.of(context)!.settings),
       ),
       body: Stack(
         children: [
           ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              _buildSectionHeader(Icons.palette_outlined, 'Aparência'),
+              _buildSectionHeader(Icons.palette_outlined, AppLocalizations.of(context)!.appearance),
               _buildAppearanceCard(),
               const SizedBox(height: 24),
-              _buildSectionHeader(Icons.account_circle_outlined, 'Conta Google'),
+              _buildSectionHeader(Icons.account_circle_outlined, AppLocalizations.of(context)!.googleAccount),
               _buildAccountCard(),
               const SizedBox(height: 24),
-              _buildSectionHeader(Icons.local_offer_outlined, 'Corredores / Categorias'),
+              _buildSectionHeader(Icons.local_offer_outlined, AppLocalizations.of(context)!.aisles),
               _buildCategoriasCard(),
               const SizedBox(height: 24),
-              _buildSectionHeader(Icons.cloud_outlined, 'Backup no Google Drive'),
+              _buildSectionHeader(Icons.cloud_outlined, AppLocalizations.of(context)!.driveBackup),
               _buildBackupCard(),
               const SizedBox(height: 16),
               if (_statusMsg != null) _buildStatusBanner(),
               const SizedBox(height: 24),
-              _buildSectionHeader(Icons.info_outline, 'Sobre o Backup'),
+              _buildSectionHeader(Icons.info_outline, AppLocalizations.of(context)!.aboutBackup),
               _buildInfoCard(),
               const SizedBox(height: 24),
-              _buildSectionHeader(Icons.gavel_outlined, 'Legal'),
+              _buildSectionHeader(Icons.gavel_outlined, AppLocalizations.of(context)!.legal),
               _buildLegalCard(),
             ],
           ),
@@ -282,9 +324,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               themeProvider.isDark ? Icons.dark_mode : Icons.light_mode,
               color: Colors.deepPurple,
             ),
-            title: const Text('Modo Escuro'),
+            title: Text(AppLocalizations.of(context)!.darkMode),
             subtitle: Text(
-              themeProvider.isDark ? 'Tema escuro ativado' : 'Tema claro ativado',
+              themeProvider.isDark ? AppLocalizations.of(context)!.darkModeOn : AppLocalizations.of(context)!.darkModeOff,
               style: const TextStyle(fontSize: 12),
             ),
             value: themeProvider.isDark,
@@ -322,7 +364,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: OutlinedButton.icon(
             onPressed: _isLoading ? null : _signIn,
             icon: const Icon(Icons.login),
-            label: const Text('Entrar com Google'),
+            label: Text(AppLocalizations.of(context)!.signIn),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.deepPurple,
               side: const BorderSide(color: Colors.deepPurple),
@@ -377,7 +419,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         TextButton(
           onPressed: _isLoading ? null : _signOut,
-          child: const Text('Sair', style: TextStyle(color: Colors.red)),
+          child: Text(AppLocalizations.of(context)!.signOut, style: const TextStyle(color: Colors.red)),
         ),
       ],
     );
@@ -423,7 +465,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: ElevatedButton.icon(
                   onPressed: _isLoading ? null : _fazerBackup,
                   icon: const Icon(Icons.cloud_upload),
-                  label: const Text('Fazer Backup Agora'),
+                  label: Text(AppLocalizations.of(context)!.createBackup),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
                     foregroundColor: Colors.white,
@@ -436,8 +478,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: _isLoading ? null : _restaurarBackup,
+                  onLongPress: _isLoading ? null : _restaurarBackupAntigo,
                   icon: const Icon(Icons.cloud_download),
-                  label: const Text('Restaurar do Backup'),
+                  label: Text(AppLocalizations.of(context)!.restoreBackup),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.deepPurple,
                     side: const BorderSide(color: Colors.deepPurple),
@@ -530,10 +573,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: const Icon(Icons.privacy_tip_outlined, color: Colors.deepPurple),
-        title: const Text('Política de Privacidade'),
-        subtitle: const Text(
-          'Como tratamos seus dados',
-          style: TextStyle(fontSize: 12),
+        title: Text(AppLocalizations.of(context)!.privacyPolicy),
+        subtitle: Text(
+          AppLocalizations.of(context)!.backupInfo,
+          style: const TextStyle(fontSize: 12),
         ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => Navigator.of(context).push(
@@ -611,7 +654,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   provider.remover(cat.id);
                                 }
                               },
-                              tooltip: 'Excluir Categoria',
+                              tooltip: AppLocalizations.of(context)!.deleteCategory,
                               constraints: const BoxConstraints(),
                               padding: EdgeInsets.zero,
                             ),
@@ -640,9 +683,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     Icons.add_circle_outline,
                     color: Colors.deepPurple,
                   ),
-                  title: const Text(
-                    'Adicionar categoria',
-                    style: TextStyle(color: Colors.deepPurple),
+                  title: Text(
+                    AppLocalizations.of(context)!.newCategory,
+                    style: const TextStyle(color: Colors.deepPurple),
                   ),
                   onTap: () => _dialogAdicionarCategoria(context, provider),
                 ),
@@ -692,11 +735,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setStateDialog) => AlertDialog(
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.local_offer_outlined, color: Colors.deepPurple),
-              SizedBox(width: 8),
-              Text('Nova Categoria'),
+              const Icon(Icons.local_offer_outlined, color: Colors.deepPurple),
+              const SizedBox(width: 8),
+              Text(AppLocalizations.of(context)!.newCategoryTitle),
             ],
           ),
           content: TextField(
@@ -704,8 +747,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             autofocus: true,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
-              labelText: 'Nome da categoria',
-              hintText: 'Ex: Congelados, Pet Shop...',
+              labelText: AppLocalizations.of(context)!.categoryName,
+              hintText: AppLocalizations.of(context)!.categoryNameHint,
               border: const OutlineInputBorder(),
               errorText: erro,
             ),
@@ -716,7 +759,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('CANCELAR'),
+              child: Text(AppLocalizations.of(ctx)!.cancel.toUpperCase()),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -726,17 +769,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: () async {
                 final nome = controller.text.trim();
                 if (nome.isEmpty) {
-                  setStateDialog(() => erro = 'Digite um nome');
+                  setStateDialog(() => erro = AppLocalizations.of(ctx)!.typeAName);
                   return;
                 }
                 if (provider.existeNome(nome)) {
-                  setStateDialog(() => erro = 'Categoria já existe');
+                  setStateDialog(() => erro = AppLocalizations.of(ctx)!.categoryExists);
                   return;
                 }
                 await provider.adicionar(nome);
                 if (ctx.mounted) Navigator.of(ctx).pop();
               },
-              child: const Text('CRIAR'),
+              child: Text(AppLocalizations.of(ctx)!.create),
             ),
           ],
         ),

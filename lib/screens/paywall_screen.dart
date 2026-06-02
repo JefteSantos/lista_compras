@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/iap_provider.dart';
+import '../l10n/generated/app_localizations.dart';
 
 class PaywallScreen extends StatefulWidget {
   const PaywallScreen({super.key});
@@ -24,16 +25,16 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
     if (success) {
        ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('🎉 Bem-vindo ao PRO! Funcionalidades desbloqueadas.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.proWelcome),
           backgroundColor: Colors.green,
         ),
       );
       Navigator.of(context).pop(); // Fecha a tela de vendas
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pagamento cancelado ou falhou.'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.proFailed),
           backgroundColor: Colors.red,
         ),
       );
@@ -57,7 +58,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 const SnackBar(content: Text('Buscando compras anteriores...')),
               );
             },
-            child: const Text('Restaurar'),
+            child: Text(AppLocalizations.of(context)!.proRestore),
           )
         ],
       ),
@@ -84,16 +85,16 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Desbloqueie todo o poder do aplicativo com uma \nCOMPRA ÚNICA VITALÍCIA.',
+              Text(
+                AppLocalizations.of(context)!.proSubtitle,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, color: Colors.black54),
               ),
               const Spacer(),
               // Benefícios
-              _buildFeatureRow(Icons.document_scanner, 'Scanner OCR de listas físicas'),
-              _buildFeatureRow(Icons.picture_as_pdf, 'Exportação ilimitada para PDF e Excel'),
-              _buildFeatureRow(Icons.trending_up, 'Histórico de Preços infinito'),
+              _buildFeatureRow(Icons.document_scanner, AppLocalizations.of(context)!.proFeatureOcr),
+              _buildFeatureRow(Icons.picture_as_pdf, AppLocalizations.of(context)!.proFeatureExport),
+              _buildFeatureRow(Icons.trending_up, AppLocalizations.of(context)!.proFeatureHistory),
               const Spacer(),
               
               // Preço
@@ -104,14 +105,14 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: Colors.deepPurple.shade100, width: 2),
                 ),
-                child: const Column(
+                child: Column(
                   children: [
                     Text(
-                      'Pague uma vez, use para sempre!',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                      AppLocalizations.of(context)!.proPayOnce,
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
                     ),
-                    SizedBox(height: 8),
-                    Text(
+                    const SizedBox(height: 8),
+                    const Text(
                       'R\$ 19,90',
                       style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
                     ),
@@ -134,8 +135,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text(
-                          'DESBLOQUEAR AGORA',
+                      : Text(
+                          AppLocalizations.of(context)!.proUnlock,
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                 ),

@@ -8,6 +8,7 @@ import 'package:lista_compras/models/listas_provider.dart';
 import 'package:lista_compras/utils/app_utils.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import '../l10n/generated/app_localizations.dart';
 
 class EditItemScreen extends StatefulWidget {
   final Item? item;
@@ -104,7 +105,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
     
     if (_nomeController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nome do item é obrigatório')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.itemNameRequired)),
       );
       return;
     }
@@ -174,7 +175,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Editar Item' : 'Novo Item'),
+        title: Text(_isEditing ? AppLocalizations.of(context)!.editItem : AppLocalizations.of(context)!.newItem),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         actions: [
@@ -192,11 +193,11 @@ class _EditItemScreenState extends State<EditItemScreen> {
               label: 'item_nome',
               child: TextField(
                 controller: _nomeController,
-                decoration: const InputDecoration(
-                  labelText: 'Nome do Item *',
-                  hintText: 'Ex: Leite, Pão, Arroz...',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.shopping_basket),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.itemNameLabel,
+                  hintText: AppLocalizations.of(context)!.itemNameHint,
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.shopping_basket),
                 ),
                 textCapitalization: TextCapitalization.words,
               ),
@@ -210,10 +211,10 @@ class _EditItemScreenState extends State<EditItemScreen> {
                     label: 'item_quantidade',
                     child: TextField(
                       controller: _quantidadeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Quantidade',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.numbers),
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.quantity,
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.numbers),
                       ),
                       keyboardType: TextInputType.number,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -227,11 +228,11 @@ class _EditItemScreenState extends State<EditItemScreen> {
                     label: 'item_preco',
                     child: TextField(
                       controller: _precoController,
-                      decoration: const InputDecoration(
-                        labelText: 'Preço (opcional)',
-                        hintText: 'Ex: 4,50',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.attach_money),
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.priceOptional,
+                        hintText: AppLocalizations.of(context)!.priceHint,
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.attach_money),
                         prefixText: 'R\$ ',
                       ),
                       keyboardType: const TextInputType.numberWithOptions(
@@ -252,11 +253,11 @@ class _EditItemScreenState extends State<EditItemScreen> {
               label: 'item_observacoes',
               child: TextField(
                 controller: _observacoesController,
-                decoration: const InputDecoration(
-                  labelText: 'Observações (opcional)',
-                  hintText: 'Ex: Marca preferida, quantidade específica...',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.note),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.notesOptional,
+                  hintText: AppLocalizations.of(context)!.notesHint,
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.note),
                 ),
                 maxLines: 3,
                 textCapitalization: TextCapitalization.sentences,
@@ -276,22 +277,22 @@ class _EditItemScreenState extends State<EditItemScreen> {
                   );
                 }
                 return InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Corredor / Categoria (opcional)',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.local_offer_outlined),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.aisleOptional,
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.local_offer_outlined),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String?>(
                       value: _categoriaSelecionada,
                       isExpanded: true,
-                      hint: const Text('Nenhuma'),
+                      hint: Text(AppLocalizations.of(context)!.none),
                       items: [
                         // Opção "Nenhuma"
-                        const DropdownMenuItem<String?>(
+                        DropdownMenuItem<String?>(
                           value: null,
-                          child: Text('Nenhuma', style: TextStyle(color: Colors.grey)),
+                          child: Text(AppLocalizations.of(context)!.none, style: const TextStyle(color: Colors.grey)),
                         ),
                         // Categorias existentes
                         ...categorias.map(
@@ -314,15 +315,15 @@ class _EditItemScreenState extends State<EditItemScreen> {
                           ),
                         ),
                         // Opção para criar nova categoria
-                        const DropdownMenuItem<String?>(
+                        DropdownMenuItem<String?>(
                           value: '__nova__',
                           child: Row(
                             children: [
-                              Icon(Icons.add, size: 16, color: Colors.deepPurple),
-                              SizedBox(width: 6),
+                              const Icon(Icons.add, size: 16, color: Colors.deepPurple),
+                              const SizedBox(width: 6),
                               Text(
-                                'Nova categoria...',
-                                style: TextStyle(color: Colors.deepPurple),
+                                AppLocalizations.of(context)!.newCategoryEllipsis,
+                                style: const TextStyle(color: Colors.deepPurple),
                               ),
                             ],
                           ),
@@ -483,7 +484,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
                 onPressed: _salvarItem,
                 icon: const Icon(Icons.save),
                 label: Text(
-                  _isEditing ? 'Salvar Alterações' : 'Adicionar Item',
+                  _isEditing ? AppLocalizations.of(context)!.saveChanges : AppLocalizations.of(context)!.addItem,
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
@@ -531,11 +532,11 @@ class _EditItemScreenState extends State<EditItemScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setStateDialog) => AlertDialog(
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.local_offer_outlined, color: Colors.deepPurple),
-              SizedBox(width: 8),
-              Text('Nova Categoria'),
+              const Icon(Icons.local_offer_outlined, color: Colors.deepPurple),
+              const SizedBox(width: 8),
+              Text(AppLocalizations.of(context)!.newCategoryTitle),
             ],
           ),
           content: TextField(
@@ -543,8 +544,8 @@ class _EditItemScreenState extends State<EditItemScreen> {
             autofocus: true,
             textCapitalization: TextCapitalization.words,
             decoration: InputDecoration(
-              labelText: 'Nome da categoria',
-              hintText: 'Ex: Congelados, Pet Shop...',
+              labelText: AppLocalizations.of(context)!.categoryName,
+              hintText: AppLocalizations.of(context)!.categoryNameHint,
               border: const OutlineInputBorder(),
               errorText: erro,
             ),
@@ -555,7 +556,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(null),
-              child: const Text('CANCELAR'),
+              child: Text(AppLocalizations.of(ctx)!.cancel.toUpperCase()),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -565,17 +566,17 @@ class _EditItemScreenState extends State<EditItemScreen> {
               onPressed: () async {
                 final nome = controller.text.trim();
                 if (nome.isEmpty) {
-                  setStateDialog(() => erro = 'Digite um nome');
+                  setStateDialog(() => erro = AppLocalizations.of(ctx)!.typeAName);
                   return;
                 }
                 if (provider.existeNome(nome)) {
-                  setStateDialog(() => erro = 'Categoria já existe');
+                  setStateDialog(() => erro = AppLocalizations.of(ctx)!.categoryExists);
                   return;
                 }
                 await provider.adicionar(nome);
                 if (ctx.mounted) Navigator.of(ctx).pop(nome);
               },
-              child: const Text('CRIAR'),
+              child: Text(AppLocalizations.of(ctx)!.create),
             ),
           ],
         ),

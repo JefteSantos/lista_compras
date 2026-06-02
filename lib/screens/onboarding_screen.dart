@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lista_compras/services/hive_service.dart';
+import 'package:lista_compras/l10n/generated/app_localizations.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final VoidCallback onComplete;
@@ -14,83 +15,77 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _controller = PageController();
   int _currentPage = 0;
 
-  static const _pages = [
-    _OnboardingPage(
-      color: Color(0xFF6200EE),
-      colorEnd: Color(0xFF3700B3),
-      icon: Icons.shopping_cart_outlined,
-      title: 'Bem-vindo ao\nNão Esquece!',
-      description:
-          'Nunca mais volte do mercado sem um item. Crie e gerencie suas listas de compras de forma simples e inteligente.',
-    ),
-    _OnboardingPage(
-      color: Color(0xFF1565C0),
-      colorEnd: Color(0xFF0D47A1),
-      icon: Icons.checklist_rtl_outlined,
-      title: 'Organize\nsuas compras',
-      description:
-          'Adicione itens com preço, quantidade e observações. Acompanhe o total estimado em tempo real enquanto faz as compras.',
-    ),
-    _OnboardingPage(
-      color: Color(0xFF6A1B9A),
-      colorEnd: Color(0xFF4A148C),
-      icon: Icons.trending_up_outlined,
-      title: 'Histórico\nde preços',
-      description:
-          'Ao finalizar uma lista, os preços são salvos automaticamente. Na próxima compra, veja se o item ficou mais caro ou mais barato.',
-    ),
-    _OnboardingPage(
-      color: Color(0xFF00838F),
-      colorEnd: Color(0xFF006064),
-      icon: Icons.camera_alt_outlined,
-      title: 'Scanner\nde listas',
-      description:
-          'Fotografe uma lista escrita (letras de forma ou impressa) e o app converte os itens automaticamente usando OCR.',
-    ),
-    _OnboardingPage(
-      color: Color(0xFF2E7D32),
-      colorEnd: Color(0xFF1B5E20),
-      icon: Icons.qr_code_outlined,
-      title: 'Compartilhe\nsuas listas',
-      description:
-          'Gere um código compacto e envie por WhatsApp ou SMS. A outra pessoa importa a lista completa no app instantaneamente.',
-    ),
-    _OnboardingPage(
-      color: Color(0xFFE65100),
-      colorEnd: Color(0xFFBF360C),
-      icon: Icons.share_outlined,
-      title: 'Compartilhe\ncomo texto',
-      description:
-          'Copie a lista formatada com preços unitários e totais para colar no WhatsApp, sem precisar que o outro tenha o app.',
-    ),
-    _OnboardingPage(
-      color: Color(0xFF1565C0),
-      colorEnd: Color(0xFF0D47A1),
-      icon: Icons.widgets_outlined,
-      title: 'Widget na\ntela inicial',
-      description:
-          'Veja os itens pendentes da sua lista ativa diretamente na tela inicial do celular, sem nem precisar abrir o app.',
-    ),
-    _OnboardingPage(
-      color: Color(0xFF00796B),
-      colorEnd: Color(0xFF004D40),
-      icon: Icons.cloud_sync_outlined,
-      title: 'Backup\nautomático',
-      description:
-          'Seus dados ficam salvos no Google Drive. Troque de aparelho e recupere todas as suas listas com 1 toque.',
-    ),
-    _OnboardingPage(
-      color: Color(0xFF37474F),
-      colorEnd: Color(0xFF263238),
-      icon: Icons.picture_as_pdf_outlined,
-      title: 'Exporte\nsuas listas',
-      description:
-          'Exporte suas listas em PDF, Excel ou CSV para imprimir, arquivar ou analisar seus gastos como preferir.',
-    ),
-  ];
+  List<_OnboardingPage> _pages(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    return [
+      _OnboardingPage(
+        color: const Color(0xFF6200EE),
+        colorEnd: const Color(0xFF3700B3),
+        icon: Icons.shopping_cart_outlined,
+        title: l.onboardingWelcomeTitle,
+        description: l.onboardingWelcomeDesc,
+      ),
+      _OnboardingPage(
+        color: const Color(0xFF1565C0),
+        colorEnd: const Color(0xFF0D47A1),
+        icon: Icons.checklist_rtl_outlined,
+        title: l.onboardingOrganizeTitle,
+        description: l.onboardingOrganizeDesc,
+      ),
+      _OnboardingPage(
+        color: const Color(0xFF6A1B9A),
+        colorEnd: const Color(0xFF4A148C),
+        icon: Icons.trending_up_outlined,
+        title: l.onboardingHistoryTitle,
+        description: l.onboardingHistoryDesc,
+      ),
+      _OnboardingPage(
+        color: const Color(0xFF00838F),
+        colorEnd: const Color(0xFF006064),
+        icon: Icons.camera_alt_outlined,
+        title: l.onboardingScannerTitle,
+        description: l.onboardingScannerDesc,
+      ),
+      _OnboardingPage(
+        color: const Color(0xFF2E7D32),
+        colorEnd: const Color(0xFF1B5E20),
+        icon: Icons.qr_code_outlined,
+        title: l.onboardingShareTitle,
+        description: l.onboardingShareDesc,
+      ),
+      _OnboardingPage(
+        color: const Color(0xFFE65100),
+        colorEnd: const Color(0xFFBF360C),
+        icon: Icons.share_outlined,
+        title: l.onboardingTextShareTitle,
+        description: l.onboardingTextShareDesc,
+      ),
+      _OnboardingPage(
+        color: const Color(0xFF1565C0),
+        colorEnd: const Color(0xFF0D47A1),
+        icon: Icons.widgets_outlined,
+        title: l.onboardingWidgetTitle,
+        description: l.onboardingWidgetDesc,
+      ),
+      _OnboardingPage(
+        color: const Color(0xFF00796B),
+        colorEnd: const Color(0xFF004D40),
+        icon: Icons.cloud_sync_outlined,
+        title: l.onboardingBackupTitle,
+        description: l.onboardingBackupDesc,
+      ),
+      _OnboardingPage(
+        color: const Color(0xFF37474F),
+        colorEnd: const Color(0xFF263238),
+        icon: Icons.picture_as_pdf_outlined,
+        title: l.onboardingExportTitle,
+        description: l.onboardingExportDesc,
+      ),
+    ];
+  }
 
   void _next() {
-    if (_currentPage < _pages.length - 1) {
+    if (_currentPage < _pages(context).length - 1) {
       _controller.nextPage(
         duration: const Duration(milliseconds: 350),
         curve: Curves.easeInOut,
@@ -112,9 +107,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         children: [
           PageView.builder(
             controller: _controller,
-            itemCount: _pages.length,
+            itemCount: _pages(context).length,
             onPageChanged: (i) => setState(() => _currentPage = i),
-            itemBuilder: (_, i) => _buildPage(_pages[i]),
+            itemBuilder: (_, i) => _buildPage(_pages(context)[i]),
           ),
           // Indicadores e botões
           Positioned(
@@ -124,14 +119,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             child: _buildBottomBar(),
           ),
           // Botão Skip
-          if (_currentPage < _pages.length - 1)
+          if (_currentPage < _pages(context).length - 1)
             Positioned(
               top: MediaQuery.of(context).padding.top + 8,
               right: 16,
               child: TextButton(
                 onPressed: _finish,
-                child: const Text(
-                  'Pular',
+                child: Text(
+                  AppLocalizations.of(context)!.onboardingSkip,
                   style: TextStyle(color: Colors.white70, fontSize: 16),
                 ),
               ),
@@ -199,8 +194,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildBottomBar() {
-    final page = _pages[_currentPage];
-    final isLast = _currentPage == _pages.length - 1;
+    final page = _pages(context)[_currentPage];
+    final isLast = _currentPage == _pages(context).length - 1;
 
     return Container(
       decoration: BoxDecoration(
@@ -217,7 +212,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
-              _pages.length,
+              _pages(context).length,
               (i) => AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -248,7 +243,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 elevation: 0,
               ),
               child: Text(
-                isLast ? 'Começar!' : 'Próximo',
+                isLast ? AppLocalizations.of(context)!.onboardingStart : AppLocalizations.of(context)!.onboardingNext,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

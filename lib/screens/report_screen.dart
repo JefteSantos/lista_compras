@@ -7,6 +7,7 @@ import '../utils/app_utils.dart';
 import '../services/export_service.dart';
 import '../models/iap_provider.dart';
 import '../screens/paywall_screen.dart';
+import '../l10n/generated/app_localizations.dart';
 
 class ReportScreen extends StatefulWidget {
   const ReportScreen({super.key});
@@ -77,13 +78,13 @@ class _ReportScreenState extends State<ReportScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Relatório de Compras'),
+        title: Text(AppLocalizations.of(context)!.reportTitle),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
-            tooltip: 'Exportar Relatório',
+            tooltip: AppLocalizations.of(context)!.exportReport,
             onPressed: () => _showExportOptions(context),
           ),
         ],
@@ -94,8 +95,8 @@ class _ReportScreenState extends State<ReportScreen> {
           const Divider(height: 1),
           Expanded(
             child: filteredList.isEmpty
-                ? const Center(
-                    child: Text('Nenhuma lista encontrada para os filtros.'),
+                ? Center(
+                    child: Text(AppLocalizations.of(context)!.noListsForFilters),
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.only(bottom: 100),
@@ -114,7 +115,7 @@ class _ReportScreenState extends State<ReportScreen> {
   Widget _buildFilters() {
     final dateFormat = DateFormat('dd/MM/yyyy');
     final dateText = _selectedDateRange == null
-        ? 'Todas as datas'
+        ? AppLocalizations.of(context)!.allDates
         : '${dateFormat.format(_selectedDateRange!.start)} - ${dateFormat.format(_selectedDateRange!.end)}';
 
     return Card(
@@ -128,11 +129,11 @@ class _ReportScreenState extends State<ReportScreen> {
               children: [
                 Expanded(
                   child: TextField(
-                    decoration: const InputDecoration(
-                      hintText: 'Buscar lista ou item...',
-                      prefixIcon: Icon(Icons.search),
+                    decoration: InputDecoration(
+                      hintText: AppLocalizations.of(context)!.search,
+                      prefixIcon: const Icon(Icons.search),
                       isDense: true,
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 8,
@@ -155,7 +156,7 @@ class _ReportScreenState extends State<ReportScreen> {
                         });
                       },
                     ),
-                    const Text('Itens'),
+                    Text(AppLocalizations.of(context)!.showItems),
                   ],
                 ),
               ],
@@ -225,14 +226,14 @@ class _ReportScreenState extends State<ReportScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  'Total: ${AppUtils.formatMoney(lista.precoTotal)}',
+                  '${AppLocalizations.of(context)!.total}: ${AppUtils.formatMoney(lista.precoTotal)}',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
                 ),
                 Text(
-                  'Pago: ${AppUtils.formatMoney(lista.precoComprado)}', // Simplificado para caber
+                  '${AppLocalizations.of(context)!.totalSpentLabel}: ${AppUtils.formatMoney(lista.precoComprado)}', // Simplificado para caber
                   style: const TextStyle(fontSize: 11, color: Colors.green),
                 ),
               ],
@@ -246,10 +247,10 @@ class _ReportScreenState extends State<ReportScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 4.0),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4.0),
                     child: Text(
-                      'Itens:',
+                      '${AppLocalizations.of(context)!.items}:',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
@@ -260,12 +261,12 @@ class _ReportScreenState extends State<ReportScreen> {
                     decoration: const BoxDecoration(color: Colors.deepPurple),
                     padding: const EdgeInsets.all(4),
                     child: Row(
-                      children: const [
+                      children: [
                         Expanded(
                           flex: 4,
                           child: Text(
-                            'Desc / Nome',
-                            style: TextStyle(
+                            AppLocalizations.of(context)!.descName,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
@@ -275,8 +276,8 @@ class _ReportScreenState extends State<ReportScreen> {
                         SizedBox(
                           width: 40,
                           child: Text(
-                            'Qtd',
-                            style: TextStyle(
+                            AppLocalizations.of(context)!.qty,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
@@ -287,8 +288,8 @@ class _ReportScreenState extends State<ReportScreen> {
                         Expanded(
                           flex: 2,
                           child: Text(
-                            'Valor',
-                            style: TextStyle(
+                            AppLocalizations.of(context)!.val,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
@@ -366,8 +367,8 @@ class _ReportScreenState extends State<ReportScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildMiniStat('Comprado', lista.precoComprado, Colors.green),
-                _buildMiniStat('Em Aberto', valorAberto, Colors.orange),
+                _buildMiniStat(AppLocalizations.of(context)!.bought, lista.precoComprado, Colors.green),
+                _buildMiniStat(AppLocalizations.of(context)!.totalPendingLabel, valorAberto, Colors.orange),
               ],
             ),
           ),
@@ -420,8 +421,8 @@ class _ReportScreenState extends State<ReportScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'TOTAL GERAL:',
+                Text(
+                  AppLocalizations.of(context)!.grandTotal,
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 Text(
@@ -446,8 +447,8 @@ class _ReportScreenState extends State<ReportScreen> {
                     ),
                     child: Column(
                       children: [
-                        const Text(
-                          'Comprado',
+                        Text(
+                          AppLocalizations.of(context)!.bought,
                           style: TextStyle(fontSize: 12, color: Colors.green),
                         ),
                         Text(
@@ -471,8 +472,8 @@ class _ReportScreenState extends State<ReportScreen> {
                     ),
                     child: Column(
                       children: [
-                        const Text(
-                          'Em Aberto',
+                        Text(
+                          AppLocalizations.of(context)!.notBought,
                           style: TextStyle(fontSize: 12, color: Colors.orange),
                         ),
                         Text(
@@ -542,14 +543,14 @@ class _ReportScreenState extends State<ReportScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Exportar Relatório',
+              Text(
+                AppLocalizations.of(context)!.exportReport,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               ListTile(
                 leading: const Icon(Icons.picture_as_pdf, color: Colors.red),
-                title: const Text('PDF'),
+                title: Text(AppLocalizations.of(context)!.exportPdf),
                 onTap: () {
                   Navigator.pop(ctx);
                   ExportService.exportToPdf(
@@ -562,7 +563,7 @@ class _ReportScreenState extends State<ReportScreen> {
               ),
               ListTile(
                 leading: const Icon(Icons.table_chart, color: Colors.green),
-                title: const Text('Excel (.xlsx)'),
+                title: Text(AppLocalizations.of(context)!.exportExcel),
                 onTap: () {
                   Navigator.pop(ctx);
                   ExportService.exportToExcel(
@@ -577,7 +578,7 @@ class _ReportScreenState extends State<ReportScreen> {
                   Icons.insert_drive_file,
                   color: Colors.blue,
                 ),
-                title: const Text('CSV'),
+                title: Text(AppLocalizations.of(context)!.exportCsv),
                 onTap: () {
                   Navigator.pop(ctx);
                   ExportService.exportToCsv(context, _filteredList, _showItems);
