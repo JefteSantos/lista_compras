@@ -38,11 +38,6 @@ class ShareCodeService {
 
   static final _reverseKeyMap = _keyMap.map((k, v) => MapEntry(v, k));
 
-  // Caracteres seguros para transmissão por qualquer canal de texto
-  // (sem +, /, = que podem ser modificados por WhatsApp/email/SMS)
-  static const _safeAlphabet =
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-
   /// Codifica uma [ListaCompras] em um código de texto compacto.
   /// Remove IDs e datas de criação de itens (regenerados na importação),
   /// reduzindo o tamanho em até 50% para listas grandes.

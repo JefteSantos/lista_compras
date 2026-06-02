@@ -9,6 +9,7 @@ import 'package:lista_compras/screens/confirmation_dialog.dart';
 import 'package:flutter/services.dart';
 import 'package:lista_compras/utils/app_utils.dart';
 import 'package:lista_compras/services/share_code_service.dart';
+import 'package:lista_compras/services/hive_service.dart';
 
 class ListDetailScreen extends StatefulWidget {
   final String listaId;
@@ -20,6 +21,15 @@ class ListDetailScreen extends StatefulWidget {
 }
 
 class _ListDetailScreenState extends State<ListDetailScreen> {
+  bool _agruparPorCategoria = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _agruparPorCategoria =
+        HiveService.obterConfiguracao<bool>('agrupar_por_categoria') ?? false;
+  }
+
   void _gerarCodigo(BuildContext context, ListaCompras lista) {
     String codigo;
     try {
@@ -253,6 +263,21 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
             ),
             actions: [
               IconButton(
+                icon: Icon(
+                  _agruparPorCategoria ? Icons.filter_list_off : Icons.filter_list,
+                ),
+                onPressed: () {
+                  setState(() => _agruparPorCategoria = !_agruparPorCategoria);
+                  HiveService.salvarConfiguracao(
+                    'agrupar_por_categoria',
+                    _agruparPorCategoria,
+                  );
+                },
+                tooltip: _agruparPorCategoria
+                    ? 'Desagrupar itens'
+                    : 'Agrupar por categoria',
+              ),
+              IconButton(
                 icon: const Icon(Icons.share),
                 onPressed: () => _copiarParaAreaTransferencia(lista),
                 tooltip: 'Copiar lista',
@@ -265,7 +290,7 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                     final confirmed = await showGenericConfirmationDialog(
                       context,
                       title: 'Excluir Lista',
-                      content: 'Tem certeza? Isso apagarrá todos os itens.',
+                      content: 'Tem certeza? Isso apagará todos os itens.',
                       confirmColor: Colors.red,
                       confirmText: 'EXCLUIR PERMANENTEMENTE',
                     );
@@ -328,15 +353,17 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                           ],
                         ),
                       )
-                    : ListView.separated(
-                        padding: const EdgeInsets.only(bottom: 100),
-                        itemCount: itensOrdenados.length,
-                        separatorBuilder: (_, i) => const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final item = itensOrdenados[index];
-                          return _buildItemTile(context, provider, lista, item);
-                        },
-                      ),
+                    : _agruparPorCategoria
+                        ? _buildGroupedList(itensOrdenados, provider, lista)
+                        : ListView.separated(
+                            padding: const EdgeInsets.only(bottom: 100),
+                            itemCount: itensOrdenados.length,
+                            separatorBuilder: (_, i) => const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final item = itensOrdenados[index];
+                              return _buildItemTile(context, provider, lista, item);
+                            },
+                          ),
               ),
             ],
           ),
@@ -478,34 +505,32 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
       child: ListTile(
         leading: Checkbox(
           value: item.comprado,
-          onChanged: (val) => provider.alternarStatusItem(lista, item),
+          onChanged: (val) {
+            HapticFeedback.lightImpact();
+            provider.alternarStatusItem(lista, item);
+          },
           activeColor: Colors.green,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         ),
-        title: item.categoria != null
-            ? Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 6,
-                children: [
-                  Text(
-                    item.nome,
-                    style: TextStyle(
-                      decoration: item.comprado ? TextDecoration.lineThrough : null,
-                      color: item.comprado ? Colors.grey : Colors.black87,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  _buildCategoriaTag(item.categoria!, comprado: item.comprado),
-                ],
-              )
-            : Text(
-                item.nome,
-                style: TextStyle(
-                  decoration: item.comprado ? TextDecoration.lineThrough : null,
-                  color: item.comprado ? Colors.grey : Colors.black87,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+        title: AnimatedDefaultTextStyle(
+          duration: const Duration(milliseconds: 300),
+          style: TextStyle(
+            decoration: item.comprado ? TextDecoration.lineThrough : null,
+            color: item.comprado ? Colors.grey : Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black87,
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
+          ),
+          child: item.categoria != null
+              ? Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 6,
+                  children: [
+                    Text(item.nome),
+                    _buildCategoriaTag(item.categoria!, comprado: item.comprado),
+                  ],
+                )
+              : Text(item.nome),
+        ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -559,6 +584,92 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
           letterSpacing: 0.2,
         ),
       ),
+    );
+  }
+
+  /// Constrói a lista agrupada por categoria com headers visuais.
+  Widget _buildGroupedList(
+    List<Item> itens,
+    ListasProvider provider,
+    ListaCompras lista,
+  ) {
+    // Agrupa por categoria
+    final Map<String, List<Item>> grupos = {};
+    for (final item in itens) {
+      final cat = item.categoria ?? 'Sem Categoria';
+      grupos.putIfAbsent(cat, () => []).add(item);
+    }
+
+    // Ordena: categorias com nome primeiro, "Sem Categoria" por último
+    final categoriasOrdenadas = grupos.keys.toList()
+      ..sort((a, b) {
+        if (a == 'Sem Categoria') return 1;
+        if (b == 'Sem Categoria') return -1;
+        return a.compareTo(b);
+      });
+
+    return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 100),
+      itemCount: categoriasOrdenadas.length,
+      itemBuilder: (context, groupIndex) {
+        final categoria = categoriasOrdenadas[groupIndex];
+        final itensDoGrupo = grupos[categoria]!;
+        final cor = categoria == 'Sem Categoria'
+            ? Colors.grey
+            : corDaCategoria(categoria);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header da categoria
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: cor.withValues(alpha: 0.12),
+                border: Border(
+                  left: BorderSide(color: cor, width: 4),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: cor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    categoria,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: cor,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${itensDoGrupo.where((i) => i.comprado).length}/${itensDoGrupo.length}',
+                    style: TextStyle(fontSize: 11, color: cor),
+                  ),
+                ],
+              ),
+            ),
+            // Itens do grupo
+            ...itensDoGrupo.map(
+              (item) => Column(
+                children: [
+                  _buildItemTile(context, provider, lista, item),
+                  const Divider(height: 1),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../models/listas_provider.dart';
 import '../models/categorias_provider.dart';
+import '../models/theme_provider.dart';
 import '../services/auth_service.dart';
 import '../services/drive_backup_service.dart';
 import 'privacy_policy_screen.dart';
@@ -58,7 +59,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       _setStatus('ERRO: $e', error: true);
-      // Janela de choque pra mostrar o erro real
+      // Dialog detalhado para facilitar debug do erro
       if (mounted) {
         showDialog(
           context: context,
@@ -216,6 +217,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              _buildSectionHeader(Icons.palette_outlined, 'Aparência'),
+              _buildAppearanceCard(),
+              const SizedBox(height: 24),
               _buildSectionHeader(Icons.account_circle_outlined, 'Conta Google'),
               _buildAccountCard(),
               const SizedBox(height: 24),
@@ -264,6 +268,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAppearanceCard() {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        return Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: SwitchListTile(
+            secondary: Icon(
+              themeProvider.isDark ? Icons.dark_mode : Icons.light_mode,
+              color: Colors.deepPurple,
+            ),
+            title: const Text('Modo Escuro'),
+            subtitle: Text(
+              themeProvider.isDark ? 'Tema escuro ativado' : 'Tema claro ativado',
+              style: const TextStyle(fontSize: 12),
+            ),
+            value: themeProvider.isDark,
+            onChanged: (_) => themeProvider.toggle(),
+            activeTrackColor: Colors.deepPurple,
+          ),
+        );
+      },
     );
   }
 

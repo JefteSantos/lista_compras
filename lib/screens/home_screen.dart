@@ -72,6 +72,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
 
     if (nome != null && mounted) {
+      HapticFeedback.selectionClick();
       final novaLista = ListaCompras(
         id: const Uuid().v4(), // Bug 9 fix: UUID evita colisão de IDs
         nome: nome,
@@ -152,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen>
                         controller.text = data!.text!;
                       }
                     },
-                    tooltip: 'Colar do teclado',
+                    tooltip: 'Colar da área de transferência',
                   ),
                 ),
               ),
@@ -305,7 +306,7 @@ class _HomeScreenState extends State<HomeScreen>
                 return;
               }
               final result = await OCRService.scanList(fromCamera: true);
-              if (result.isNotEmpty && mounted) {
+              if (result.isNotEmpty && context.mounted) {
                 _exibirConfirmacaoOCR(context, result);
               }
             },
@@ -416,6 +417,7 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           );
         },
+        onLongPress: () => _mostrarMenuLista(lista),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -435,6 +437,15 @@ class _HomeScreenState extends State<HomeScreen>
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.copy_all, size: 20),
+                    color: Colors.deepPurple.shade300,
+                    tooltip: 'Duplicar lista',
+                    onPressed: () => _duplicarLista(lista),
+                    constraints: const BoxConstraints(),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                  ),
+                  const SizedBox(width: 4),
                   _buildStatusBadge(lista),
                 ],
               ),
@@ -480,6 +491,73 @@ class _HomeScreenState extends State<HomeScreen>
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _duplicarLista(ListaCompras lista) async {
+    final provider = Provider.of<ListasProvider>(context, listen: false);
+    final novaLista = await provider.duplicarLista(lista);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lista "${novaLista.nome}" criada!'),
+          backgroundColor: Colors.green,
+          action: SnackBarAction(
+            label: 'ABRIR',
+            textColor: Colors.white,
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ListDetailScreen(listaId: novaLista.id),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    }
+  }
+
+  void _mostrarMenuLista(ListaCompras lista) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                lista.nome,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+            const Divider(height: 1),
+            ListTile(
+              leading: const Icon(Icons.copy_all, color: Colors.deepPurple),
+              title: const Text('Duplicar lista'),
+              subtitle: const Text('Cria uma cópia com itens desmarcados'),
+              onTap: () {
+                Navigator.pop(ctx);
+                _duplicarLista(lista);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline, color: Colors.red),
+              title: const Text('Excluir lista', style: TextStyle(color: Colors.red)),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final provider = Provider.of<ListasProvider>(context, listen: false);
+                await provider.removerLista(lista.id);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
         ),
       ),
     );

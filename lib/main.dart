@@ -16,6 +16,7 @@ import 'services/drive_backup_service.dart';
 import 'services/hive_service.dart';
 import 'services/home_widget_service.dart';
 import 'models/iap_provider.dart';
+import 'models/theme_provider.dart';
 
 /// Chave global do Navigator para acessar context no WidgetsBindingObserver.
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -58,6 +59,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ListasProvider()),
         ChangeNotifierProvider(create: (_) => IapProvider()),
         ChangeNotifierProvider(create: (_) => CategoriasProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
@@ -102,41 +104,66 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      title: 'Não Esquece!',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          backgroundColor: Colors.deepPurple,
-          foregroundColor: Colors.white,
-          elevation: 0,
-        ),
-        tabBarTheme: const TabBarThemeData(
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
-          indicatorColor: Colors.white,
-          dividerColor: Colors.transparent,
-        ),
-      ),
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('pt', 'BR')],
-      home: _onboardingCompleto
-          ? const HomeScreen()
-          : OnboardingScreen(
-              onComplete: () {
-                navigatorKey.currentState?.pushReplacement(
-                  MaterialPageRoute(builder: (_) => const HomeScreen()),
-                );
-              },
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          title: 'Não Esquece!',
+          debugShowCheckedModeBanner: false,
+          themeMode: themeProvider.themeMode,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+            useMaterial3: true,
+            appBarTheme: const AppBarTheme(
+              centerTitle: true,
+              backgroundColor: Colors.deepPurple,
+              foregroundColor: Colors.white,
+              elevation: 0,
             ),
+            tabBarTheme: const TabBarThemeData(
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              indicatorColor: Colors.white,
+              dividerColor: Colors.transparent,
+            ),
+          ),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.deepPurple,
+              brightness: Brightness.dark,
+            ),
+            useMaterial3: true,
+            brightness: Brightness.dark,
+            appBarTheme: AppBarTheme(
+              centerTitle: true,
+              backgroundColor: Colors.deepPurple.shade800,
+              foregroundColor: Colors.white,
+              elevation: 0,
+            ),
+            tabBarTheme: const TabBarThemeData(
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              indicatorColor: Colors.white,
+              dividerColor: Colors.transparent,
+            ),
+          ),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('pt', 'BR')],
+          home: _onboardingCompleto
+              ? const HomeScreen()
+              : OnboardingScreen(
+                  onComplete: () {
+                    navigatorKey.currentState?.pushReplacement(
+                      MaterialPageRoute(builder: (_) => const HomeScreen()),
+                    );
+                  },
+                ),
+        );
+      },
     );
   }
 }
