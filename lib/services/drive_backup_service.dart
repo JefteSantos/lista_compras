@@ -174,10 +174,73 @@ class DriveBackupService {
   static Future<void> uploadBackupSilently(List<ListaCompras> listas) async {
     try {
       if (!AuthService.isSignedIn) return;
+      if (listas.isEmpty) return; // TRAVA DE SEGURANÇA
       await uploadBackup(listas);
     } catch (e) {
       debugPrint('Backup silencioso falhou: $e');
     }
+  }
+
+  /// Baixa a penúltima revisão do backup (útil para recuperação de emergência).
+  static Future<BackupResult?> downloadPreviousRevisionBackup() async {
+    try {
+      final api = await _getDriveApi();
+      if (api == null) return null;
+      return await _downloadPreviousRevisionInternal(api);
+    } catch (e) {
+      if (e.toString().contains('401') || e.toString().contains('invalid authentication credentials')) {
+        debugPrint('[DriveBackup] Token expirado ou inválido. Tentando renovar silenciosamente...');
+        final api = await _getDriveApi(forceRefresh: true);
+        if (api != null) {
+          return await _downloadPreviousRevisionInternal(api);
+        }
+      }
+      rethrow;
+    }
+  }
+
+  static Future<BackupResult?> _downloadPreviousRevisionInternal(drive.DriveApi api) async {
+    final existing = await api.files.list(
+      spaces: 'appDataFolder',
+      q: "name = '$_backupFileName'",
+      $fields: 'files(id, modifiedTime)',
+    );
+
+    if (existing.files?.isEmpty ?? true) return null;
+
+    final fileInfo = existing.files!.first;
+    final fileId = fileInfo.id!;
+
+    final revisions = await api.revisions.list(fileId, $fields: 'revisions(id, modifiedTime)');
+    
+    if (revisions.revisions == null || revisions.revisions!.isEmpty) return null;
+
+    // A última revisão é a atual. Pegamos a penúltima (se houver).
+    final revs = revisions.revisions!;
+    drive.Revision targetRev;
+    if (revs.length > 1) {
+      targetRev = revs[revs.length - 2];
+    } else {
+      targetRev = revs.last;
+    }
+
+    final media = await api.revisions.get(
+      fileId,
+      targetRev.id!,
+      downloadOptions: drive.DownloadOptions.fullMedia,
+    ) as drive.Media;
+
+    final bytes = await media.stream.expand((b) => b).toList();
+    final jsonStr = utf8.decode(GZipDecoder().decodeBytes(bytes));
+    final data = jsonDecode(jsonStr) as Map<String, dynamic>;
+
+    final listas = (data['listas'] as List<dynamic>)
+        .map((j) => ListaCompras.fromJson(j as Map<String, dynamic>))
+        .toList();
+
+    final dataBackup = targetRev.modifiedTime ?? fileInfo.modifiedTime ?? DateTime.now();
+
+    return BackupResult(listas: listas, dataBackup: dataBackup);
   }
 }
 

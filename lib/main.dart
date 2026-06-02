@@ -3,7 +3,6 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -17,6 +16,7 @@ import 'services/hive_service.dart';
 import 'services/home_widget_service.dart';
 import 'models/iap_provider.dart';
 import 'models/theme_provider.dart';
+import 'l10n/generated/app_localizations.dart';
 
 /// Chave global do Navigator para acessar context no WidgetsBindingObserver.
 final navigatorKey = GlobalKey<NavigatorState>();
@@ -147,12 +147,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               dividerColor: Colors.transparent,
             ),
           ),
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [Locale('pt', 'BR')],
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: _onboardingCompleto
               ? const HomeScreen()
               : OnboardingScreen(

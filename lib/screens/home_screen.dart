@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:lista_compras/models/listas_provider.dart';
 import 'package:lista_compras/models/lista_compras.dart';
@@ -9,10 +10,12 @@ import 'package:lista_compras/services/share_code_service.dart';
 import 'package:lista_compras/utils/app_utils.dart';
 import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
+import 'package:lista_compras/services/text_parser_service.dart';
 import 'package:lista_compras/services/ocr_service.dart';
 import 'package:lista_compras/models/item.dart';
 import 'package:lista_compras/models/iap_provider.dart';
 import 'package:lista_compras/screens/paywall_screen.dart';
+import 'package:lista_compras/l10n/generated/app_localizations.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -40,14 +43,16 @@ class _HomeScreenState extends State<HomeScreen>
     final controller = TextEditingController();
     final String? nome = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Nova Lista'),
+      builder: (context) {
+        final l = AppLocalizations.of(context)!;
+        return AlertDialog(
+        title: Text(l.newList),
         content: Semantics(
           label: 'nome_lista',
           child: TextField(
             controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'Nome da Lista',
+            decoration: InputDecoration(
+              labelText: l.listName,
               hintText: 'Ex: Supermercado Semanal',
             ),
             autofocus: true,
@@ -56,8 +61,15 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         actions: [
           TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _importarListaTexto();
+            },
+            child: const Text('COLAR TEXTO'),
+          ),
+          TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('CANCELAR'),
+            child: Text(l.cancel.toUpperCase()),
           ),
           ElevatedButton(
             onPressed: () {
@@ -65,10 +77,11 @@ class _HomeScreenState extends State<HomeScreen>
                 Navigator.pop(context, controller.text.trim());
               }
             },
-            child: const Text('CRIAR'),
+            child: Text(l.create),
           ),
         ],
-      ),
+      );
+      },
     );
 
     if (nome != null && mounted) {
@@ -89,6 +102,64 @@ class _HomeScreenState extends State<HomeScreen>
           MaterialPageRoute(
             builder: (context) => ListDetailScreen(listaId: novaLista.id),
           ),
+        );
+      }
+    }
+  }
+
+  void _importarListaTexto() async {
+    final controller = TextEditingController();
+    final String? texto = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        final l = AppLocalizations.of(context)!;
+        return AlertDialog(
+          title: const Text('Importar de Texto'),
+          content: TextField(
+            controller: controller,
+            maxLines: 8,
+            decoration: const InputDecoration(
+              hintText: 'Cole aqui o texto da lista exportada do WhatsApp...',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l.cancel.toUpperCase()),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (controller.text.trim().isNotEmpty) {
+                  Navigator.pop(context, controller.text.trim());
+                }
+              },
+              child: const Text('IMPORTAR'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (texto != null && mounted) {
+      final novaLista = TextParserService.parseText(texto);
+      if (novaLista != null) {
+        final listaComId = novaLista.copyWith(id: const Uuid().v4());
+        await Provider.of<ListasProvider>(context, listen: false).adicionarLista(listaComId);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLocalizations.of(context)!.importSuccess), backgroundColor: Colors.green),
+          );
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ListDetailScreen(listaId: listaComId.id),
+            ),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.importError), backgroundColor: Colors.redAccent),
         );
       }
     }
@@ -132,7 +203,7 @@ class _HomeScreenState extends State<HomeScreen>
                 autofocus: true,
                 style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
                 decoration: InputDecoration(
-                  hintText: 'Cole o código NE2:...',
+                  hintText: AppLocalizations.of(context)!.importCodeHint,
                   hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 12),
                   filled: true,
                   fillColor: Colors.grey.shade50,
@@ -153,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen>
                         controller.text = data!.text!;
                       }
                     },
-                    tooltip: 'Colar da área de transferência',
+                    tooltip: AppLocalizations.of(context)!.pasteFromClipboard,
                   ),
                 ),
               ),
@@ -164,11 +235,11 @@ class _HomeScreenState extends State<HomeScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('CANCELAR', style: TextStyle(color: Colors.grey)),
+            child: Text(AppLocalizations.of(ctx)!.cancel.toUpperCase(), style: const TextStyle(color: Colors.grey)),
           ),
           ElevatedButton.icon(
             icon: const Icon(Icons.download, size: 18),
-            label: const Text('IMPORTAR'),
+            label: Text(AppLocalizations.of(ctx)!.import.toUpperCase()),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepPurple,
               foregroundColor: Colors.white,
@@ -182,8 +253,8 @@ class _HomeScreenState extends State<HomeScreen>
                 Navigator.pop(ctx, lista);
               } else {
                 ScaffoldMessenger.of(ctx).showSnackBar(
-                  const SnackBar(
-                    content: Text('Código inválido ou corrompido!'),
+                   SnackBar(
+                     content: Text(AppLocalizations.of(ctx)!.importError),
                     backgroundColor: Colors.redAccent,
                     behavior: SnackBarBehavior.floating,
                   ),
@@ -205,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lista "${novaLista.nome}" importada com sucesso!'),
+            content: Text(AppLocalizations.of(context)!.importSuccess),
             backgroundColor: Colors.green,
           ),
         );
@@ -217,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Itens Escaneados'),
+        title: Text(AppLocalizations.of(context)!.ocrConfirmTitle),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
@@ -242,7 +313,7 @@ class _HomeScreenState extends State<HomeScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('CANCELAR'),
+            child: Text(AppLocalizations.of(ctx)!.cancel.toUpperCase()),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -252,12 +323,12 @@ class _HomeScreenState extends State<HomeScreen>
               final nome = await showDialog<String>(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text('Nome da Nova Lista'),
+                  title: Text(AppLocalizations.of(context)!.newList),
                   content: TextField(controller: controller, autofocus: true),
                   actions: [
                     ElevatedButton(
                       onPressed: () => Navigator.pop(context, controller.text),
-                      child: const Text('CRIAR'),
+                      child: Text(AppLocalizations.of(context)!.create),
                     ),
                   ],
                 ),
@@ -282,7 +353,7 @@ class _HomeScreenState extends State<HomeScreen>
                 }
               }
             },
-            child: const Text('CRIAR LISTA'),
+            child: Text(AppLocalizations.of(ctx)!.ocrCreateList.toUpperCase()),
           ),
         ],
       ),
@@ -293,7 +364,7 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Minhas Listas'),
+        title: Text(AppLocalizations.of(context)!.myLists),
         actions: [
           IconButton(
             icon: const Icon(Icons.camera_alt),
@@ -310,16 +381,16 @@ class _HomeScreenState extends State<HomeScreen>
                 _exibirConfirmacaoOCR(context, result);
               }
             },
-            tooltip: 'Escanear lista física',
+            tooltip: AppLocalizations.of(context)!.scanPhysicalList,
           ),
           IconButton(
             icon: const Icon(Icons.download),
             onPressed: _importarPorCodigo,
-            tooltip: 'Importar por código',
+            tooltip: AppLocalizations.of(context)!.importByCode,
           ),
           IconButton(
             icon: const Icon(Icons.bar_chart),
-            tooltip: 'Relatórios',
+            tooltip: AppLocalizations.of(context)!.reports,
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => const ReportScreen()),
@@ -328,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           IconButton(
             icon: const Icon(Icons.settings),
-            tooltip: 'Configurações',
+            tooltip: AppLocalizations.of(context)!.settings,
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
@@ -340,9 +411,9 @@ class _HomeScreenState extends State<HomeScreen>
         ],
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Ativas', icon: Icon(Icons.shopping_cart_outlined)),
-            Tab(text: 'Histórico', icon: Icon(Icons.history)),
+          tabs: [
+            Tab(text: AppLocalizations.of(context)!.activeLists, icon: const Icon(Icons.shopping_cart_outlined)),
+            Tab(text: AppLocalizations.of(context)!.finishedLists, icon: const Icon(Icons.history)),
           ],
         ),
       ),
@@ -365,7 +436,7 @@ class _HomeScreenState extends State<HomeScreen>
         key: const Key('fabNovaLista'),
         onPressed: _criarNovaLista,
         icon: const Icon(Icons.add),
-        label: const Text('Nova Lista'),
+        label: Text(AppLocalizations.of(context)!.newList),
       ),
     );
   }
@@ -384,8 +455,8 @@ class _HomeScreenState extends State<HomeScreen>
             const SizedBox(height: 16),
             Text(
               isAtivas
-                  ? 'Nenhuma lista ativa no momento.'
-                  : 'Nenhum histórico disponível.',
+                  ? AppLocalizations.of(context)!.emptyListTitle
+                  : AppLocalizations.of(context)!.emptyFinishedTitle,
               style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
             ),
           ],
@@ -440,7 +511,7 @@ class _HomeScreenState extends State<HomeScreen>
                   IconButton(
                     icon: const Icon(Icons.copy_all, size: 20),
                     color: Colors.deepPurple.shade300,
-                    tooltip: 'Duplicar lista',
+                    tooltip: AppLocalizations.of(context)!.duplicateList,
                     onPressed: () => _duplicarLista(lista),
                     constraints: const BoxConstraints(),
                     padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -464,7 +535,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                   const Spacer(),
                   Text(
-                    '${lista.itensComprados}/${lista.totalItens} itens',
+                    AppLocalizations.of(context)!.itemsCount(lista.itensComprados, lista.totalItens),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -485,7 +556,7 @@ class _HomeScreenState extends State<HomeScreen>
               if (lista.precoTotal > 0) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Total estimado: ${AppUtils.formatMoney(lista.precoTotal)}',
+                  AppLocalizations.of(context)!.estimatedTotal(AppUtils.formatMoney(lista.precoTotal)),
                   style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
               ],
@@ -502,10 +573,10 @@ class _HomeScreenState extends State<HomeScreen>
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lista "${novaLista.nome}" criada!'),
+          content: Text(AppLocalizations.of(context)!.listCreated(novaLista.nome)),
           backgroundColor: Colors.green,
           action: SnackBarAction(
-            label: 'ABRIR',
+            label: AppLocalizations.of(context)!.open,
             textColor: Colors.white,
             onPressed: () {
               Navigator.of(context).push(
@@ -540,8 +611,8 @@ class _HomeScreenState extends State<HomeScreen>
             const Divider(height: 1),
             ListTile(
               leading: const Icon(Icons.copy_all, color: Colors.deepPurple),
-              title: const Text('Duplicar lista'),
-              subtitle: const Text('Cria uma cópia com itens desmarcados'),
+              title: Text(AppLocalizations.of(context)!.duplicateList),
+              subtitle: Text(AppLocalizations.of(context)!.duplicateListSubtitle),
               onTap: () {
                 Navigator.pop(ctx);
                 _duplicarLista(lista);
@@ -549,7 +620,7 @@ class _HomeScreenState extends State<HomeScreen>
             ),
             ListTile(
               leading: const Icon(Icons.delete_outline, color: Colors.red),
-              title: const Text('Excluir lista', style: TextStyle(color: Colors.red)),
+              title: Text(AppLocalizations.of(context)!.deleteList, style: const TextStyle(color: Colors.red)),
               onTap: () async {
                 Navigator.pop(ctx);
                 final provider = Provider.of<ListasProvider>(context, listen: false);
@@ -571,7 +642,7 @@ class _HomeScreenState extends State<HomeScreen>
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        lista.finalizada ? 'Concluída' : 'Em andamento',
+        lista.finalizada ? AppLocalizations.of(context)!.finalized : AppLocalizations.of(context)!.inProgress,
         style: TextStyle(
           color: lista.finalizada
               ? Colors.green.shade800
@@ -584,6 +655,6 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+    return DateFormat.yMd(Localizations.localeOf(context).toLanguageTag()).format(date);
   }
 }

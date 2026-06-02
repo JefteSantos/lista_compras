@@ -10,6 +10,7 @@ import 'package:flutter/services.dart';
 import 'package:lista_compras/utils/app_utils.dart';
 import 'package:lista_compras/services/share_code_service.dart';
 import 'package:lista_compras/services/hive_service.dart';
+import 'package:lista_compras/l10n/generated/app_localizations.dart';
 
 class ListDetailScreen extends StatefulWidget {
   final String listaId;
@@ -53,11 +54,11 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.qr_code, color: Colors.deepPurple),
-            SizedBox(width: 8),
-            Text('Código de Compartilhamento'),
+            const Icon(Icons.qr_code, color: Colors.deepPurple),
+            const SizedBox(width: 8),
+            Text(AppLocalizations.of(context)!.shareCode),
           ],
         ),
         content: Column(
@@ -92,11 +93,11 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('FECHAR'),
+            child: Text(AppLocalizations.of(ctx)!.close),
           ),
           ElevatedButton.icon(
             icon: const Icon(Icons.copy),
-            label: const Text('COPIAR'),
+            label: Text(AppLocalizations.of(ctx)!.copy),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepPurple,
               foregroundColor: Colors.white,
@@ -124,21 +125,21 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
     final String? novoNome = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Editar nome da lista'),
+        title: Text(AppLocalizations.of(context)!.editListName),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(labelText: 'Nome'),
+          decoration: InputDecoration(labelText: AppLocalizations.of(context)!.name),
           autofocus: true,
           textCapitalization: TextCapitalization.sentences,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(null),
-            child: const Text('CANCELAR'),
+            child: Text(AppLocalizations.of(context)!.cancel.toUpperCase()),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: const Text('SALVAR'),
+            child: Text(AppLocalizations.of(context)!.save),
           ),
         ],
       ),
@@ -234,8 +235,8 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
 
         if (lista == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Erro')),
-            body: const Center(child: Text('Lista não encontrada.')),
+            appBar: AppBar(title: Text(AppLocalizations.of(context)!.error)),
+            body: Center(child: Text(AppLocalizations.of(context)!.listNotFound)),
           );
         }
 
@@ -274,13 +275,13 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                   );
                 },
                 tooltip: _agruparPorCategoria
-                    ? 'Desagrupar itens'
-                    : 'Agrupar por categoria',
+                    ? AppLocalizations.of(context)!.ungroupItems
+                    : AppLocalizations.of(context)!.groupByCategory,
               ),
               IconButton(
                 icon: const Icon(Icons.share),
                 onPressed: () => _copiarParaAreaTransferencia(lista),
-                tooltip: 'Copiar lista',
+                tooltip: AppLocalizations.of(context)!.copyList,
               ),
               PopupMenuButton<String>(
                 onSelected: (value) async {
@@ -289,10 +290,10 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                   } else if (value == 'excluir') {
                     final confirmed = await showGenericConfirmationDialog(
                       context,
-                      title: 'Excluir Lista',
-                      content: 'Tem certeza? Isso apagará todos os itens.',
+                      title: AppLocalizations.of(context)!.deleteList,
+                      content: AppLocalizations.of(context)!.deleteListConfirm,
                       confirmColor: Colors.red,
-                      confirmText: 'EXCLUIR PERMANENTEMENTE',
+                      confirmText: AppLocalizations.of(context)!.deletePermanently,
                     );
                     if (confirmed && context.mounted) {
                       await provider.removerLista(lista.id);
@@ -303,26 +304,26 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                   }
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'gerar_codigo',
                     child: Row(
                       children: [
-                        Icon(Icons.qr_code, color: Colors.deepPurple),
-                        SizedBox(width: 8),
-                        Text('Gerar Código de Compartilhamento'),
+                        const Icon(Icons.qr_code, color: Colors.deepPurple),
+                        const SizedBox(width: 8),
+                        Text(AppLocalizations.of(context)!.generateShareCode),
                       ],
                     ),
                   ),
                   const PopupMenuDivider(),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'excluir',
                     child: Row(
                       children: [
-                        Icon(Icons.delete, color: Colors.red),
-                        SizedBox(width: 8),
+                        const Icon(Icons.delete, color: Colors.red),
+                        const SizedBox(width: 8),
                         Text(
-                          'Excluir Lista',
-                          style: TextStyle(color: Colors.red),
+                          AppLocalizations.of(context)!.deleteList,
+                          style: const TextStyle(color: Colors.red),
                         ),
                       ],
                     ),
@@ -346,8 +347,8 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                               color: Colors.grey.shade300,
                             ),
                             const SizedBox(height: 10),
-                            const Text(
-                              'Lista vazia. Adicione itens!',
+                            Text(
+                              AppLocalizations.of(context)!.emptyListAdd,
                               style: TextStyle(color: Colors.grey),
                             ),
                           ],
@@ -403,7 +404,7 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                     },
                     icon: Icon(lista.finalizada ? Icons.replay : Icons.check),
                     label: Text(
-                      lista.finalizada ? 'Reabrir Lista' : 'Finalizar Compra',
+                      lista.finalizada ? AppLocalizations.of(context)!.reopenList : AppLocalizations.of(context)!.finishPurchase,
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: lista.finalizada
@@ -435,19 +436,19 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildSummaryItem(
-            label: 'Itens',
+            label: AppLocalizations.of(context)!.items,
             value: '${lista.itensComprados}/${lista.totalItens}',
             icon: Icons.checklist,
             color: Colors.blue,
           ),
           _buildSummaryItem(
-            label: 'Carrinho',
+            label: AppLocalizations.of(context)!.cart,
             value: AppUtils.formatMoney(lista.precoComprado),
             icon: Icons.shopping_cart,
             color: Colors.green,
           ),
           _buildSummaryItem(
-            label: 'Faltam',
+            label: AppLocalizations.of(context)!.remaining,
             value: AppUtils.formatMoney(lista.precoTotal - lista.precoComprado),
             icon: Icons.remove_shopping_cart,
             color: Colors.red,
@@ -596,15 +597,15 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
     // Agrupa por categoria
     final Map<String, List<Item>> grupos = {};
     for (final item in itens) {
-      final cat = item.categoria ?? 'Sem Categoria';
+      final cat = item.categoria ?? AppLocalizations.of(context)!.noCategory;
       grupos.putIfAbsent(cat, () => []).add(item);
     }
 
     // Ordena: categorias com nome primeiro, "Sem Categoria" por último
     final categoriasOrdenadas = grupos.keys.toList()
       ..sort((a, b) {
-        if (a == 'Sem Categoria') return 1;
-        if (b == 'Sem Categoria') return -1;
+        if (a == AppLocalizations.of(context)!.noCategory) return 1;
+        if (b == AppLocalizations.of(context)!.noCategory) return -1;
         return a.compareTo(b);
       });
 
@@ -614,7 +615,7 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
       itemBuilder: (context, groupIndex) {
         final categoria = categoriasOrdenadas[groupIndex];
         final itensDoGrupo = grupos[categoria]!;
-        final cor = categoria == 'Sem Categoria'
+        final cor = categoria == AppLocalizations.of(context)!.noCategory
             ? Colors.grey
             : corDaCategoria(categoria);
 
