@@ -20,7 +20,7 @@ void main() {
         Item(
           id: 'item-1',
           nome: 'Picanha',
-          quantidade: 2,
+          quantidade: 2.0,
           preco: 89.90,
           observacoes: 'Pegar a peça com menos gordura',
           dataCriacao: DateTime.now(),
@@ -31,7 +31,7 @@ void main() {
         Item(
           id: 'item-2',
           nome: 'Cerveja',
-          quantidade: 12,
+          quantidade: 12.0,
           preco: 4.50,
           comprado: true,
           dataCriacao: DateTime.now(),
@@ -89,7 +89,7 @@ void main() {
             id: 'item-$i',
             nome:
                 'Item numero $i de uma lista propositalmente gigantesca que estamos criando apenas para testar se o nosso limite de seguranca de 32KB compactados esta funcionando corretamente no servidor de compartilhamento',
-            quantidade: i,
+            quantidade: i.toDouble(),
             observacoes:
                 'Observacao extremamente longa e detalhada, com repetições e variações de caracteres $i para ocupar espaço no buffer final e forçar o throw da exceção de tamanho excedido durante o teste unitário de hoje',
             dataCriacao: DateTime.now(),

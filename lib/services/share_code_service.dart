@@ -159,7 +159,7 @@ class ShareCodeService {
           // comprado (default false)
           item.putIfAbsent('comprado', () => false);
           // quantidade (default 1)
-          item.putIfAbsent('quantidade', () => 1);
+          item.putIfAbsent('quantidade', () => 1.0);
         }
       }
     }

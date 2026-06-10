@@ -33,4 +33,9 @@ class AppUtils {
     return NumberFormat.currency(locale: numberLocale, symbol: currencySymbol)
         .format(value);
   }
+
+  /// Retorna a quantidade formatada sem `.0` se for inteira.
+  static String formatQuantity(double quantity) {
+    return quantity % 1 == 0 ? quantity.toInt().toString() : quantity.toString().replaceAll('.', ',');
+  }
 }

@@ -133,5 +133,6 @@ Write-Host "  Build concluido com sucesso!" -ForegroundColor Green
 Write-Host "  Versao: $newVersion" -ForegroundColor Cyan
 Write-Host "  versionName: $newVersionName (exibida ao usuario)" -ForegroundColor DarkGray
 Write-Host "  versionCode: $build (interna da Play Store)" -ForegroundColor DarkGray
+Write-Host "  APK gerado ($apkSize MB): $apkPath" -ForegroundColor Green
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor DarkCyan
 Write-Host ""

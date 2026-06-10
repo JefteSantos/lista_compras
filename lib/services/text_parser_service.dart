@@ -49,7 +49,7 @@ class TextParserService {
       final itemMatch = itemRegExp.firstMatch(tLine);
       if (itemMatch != null) {
         final qtdStr = itemMatch.group(1)!.replaceAll(',', '.');
-        final int qtd = double.tryParse(qtdStr)?.toInt() ?? 1;
+        final double qtd = double.tryParse(qtdStr) ?? 1.0;
         
         String remainder = itemMatch.group(2)!.trim();
         String nome = remainder;

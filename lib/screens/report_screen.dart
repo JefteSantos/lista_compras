@@ -339,7 +339,7 @@ class _ReportScreenState extends State<ReportScreen> {
                           SizedBox(
                             width: 40,
                             child: Text(
-                              '${item.quantidade}',
+                              AppUtils.formatQuantity(item.quantidade),
                               style: const TextStyle(fontSize: 12),
                               textAlign: TextAlign.center,
                             ),

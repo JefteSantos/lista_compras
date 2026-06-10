@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import '../models/lista_compras.dart';
+import '../utils/app_utils.dart';
 
 class ShareService {
   static Future<void> compartilharLista(ListaCompras lista) async {
@@ -42,7 +43,7 @@ class ShareService {
       buffer.write('$status ${item.nome}');
 
       if (item.quantidade > 1) {
-        buffer.write(' (x${item.quantidade})');
+        buffer.write(' (x${AppUtils.formatQuantity(item.quantidade)})');
       }
 
       if (item.preco != null) {

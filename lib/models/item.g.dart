@@ -19,7 +19,7 @@ class ItemAdapter extends TypeAdapter<Item> {
     return Item(
       id: fields[0] as String,
       nome: fields[1] as String,
-      quantidade: fields[2] as int,
+      quantidade: (fields[2] as num).toDouble(),
       preco: fields[3] as double?,
       comprado: fields[4] as bool,
       observacoes: fields[5] as String?,
