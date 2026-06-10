@@ -11,7 +11,7 @@ class Item extends HiveObject {
   String nome;
 
   @HiveField(2)
-  int quantidade;
+  double quantidade;
 
   @HiveField(3)
   double? preco;
@@ -34,7 +34,7 @@ class Item extends HiveObject {
   Item({
     required this.id,
     required this.nome,
-    this.quantidade = 1,
+    this.quantidade = 1.0,
     this.preco,
     this.comprado = false,
     this.observacoes,
@@ -48,7 +48,7 @@ class Item extends HiveObject {
   Item copyWith({
     String? id,
     String? nome,
-    int? quantidade,
+    double? quantidade,
     double? preco,
     bool? comprado,
     String? observacoes,
@@ -84,7 +84,7 @@ class Item extends HiveObject {
   factory Item.fromJson(Map<String, dynamic> json) => Item(
         id: json['id'] as String,
         nome: json['nome'] as String,
-        quantidade: (json['quantidade'] as num).toInt(),
+        quantidade: (json['quantidade'] as num).toDouble(),
         preco: (json['preco'] as num?)?.toDouble(),
         comprado: json['comprado'] as bool,
         observacoes: json['observacoes'] as String?,

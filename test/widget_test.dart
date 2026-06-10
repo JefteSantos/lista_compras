@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:lista_compras/l10n/generated/app_localizations.dart';
 import 'package:lista_compras/models/listas_provider.dart';
 import 'package:lista_compras/models/lista_compras.dart';
 import 'package:lista_compras/models/item.dart';
@@ -42,6 +44,8 @@ void main() {
     testWidgets('deve exibir título corretamente', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: ChangeNotifierProvider(
             create: (_) => ListasProvider(),
             child: const HomeScreen(),
@@ -55,6 +59,8 @@ void main() {
     testWidgets('deve exibir tabs Ativas e Histórico', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: ChangeNotifierProvider(
             create: (_) => ListasProvider(),
             child: const HomeScreen(),
@@ -69,6 +75,8 @@ void main() {
     testWidgets('deve exibir FAB para adicionar lista', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: ChangeNotifierProvider(
             create: (_) => ListasProvider(),
             child: const HomeScreen(),
@@ -83,6 +91,8 @@ void main() {
     testWidgets('deve exibir botão de relatórios', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           home: ChangeNotifierProvider(
             create: (_) => ListasProvider(),
             child: const HomeScreen(),

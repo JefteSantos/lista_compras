@@ -297,7 +297,7 @@ class _HomeScreenState extends State<HomeScreen>
             itemBuilder: (context, index) {
               final item = itensScan[index];
               return ListTile(
-                leading: CircleAvatar(child: Text(item.quantidade.toString())),
+                leading: CircleAvatar(child: Text(AppUtils.formatQuantity(item.quantidade))),
                 title: Text(item.nome),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),

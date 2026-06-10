@@ -167,7 +167,7 @@ class ExportService {
                         children: [
                           pw.Expanded(
                             child: pw.Text(
-                              '${item.quantidade}x ${item.nome}',
+                              '${AppUtils.formatQuantity(item.quantidade)}x ${item.nome}',
                               style: const pw.TextStyle(fontSize: 10),
                             ),
                           ),
@@ -273,7 +273,7 @@ class ExportService {
               lista.precoComprado.toStringAsFixed(2),
               (lista.precoTotal - lista.precoComprado).toStringAsFixed(2),
               item.nome,
-              item.quantidade.toString(),
+              AppUtils.formatQuantity(item.quantidade),
               item.preco?.toStringAsFixed(2) ?? "0.00",
               item.observacoes ?? "",
             ]);
@@ -380,7 +380,7 @@ class ExportService {
               DoubleCellValue(lista.precoComprado),
               DoubleCellValue(lista.precoTotal - lista.precoComprado),
               TextCellValue(item.nome),
-              IntCellValue(item.quantidade),
+              DoubleCellValue(item.quantidade),
               DoubleCellValue(item.preco ?? 0),
               TextCellValue(item.observacoes ?? ""),
             ]);

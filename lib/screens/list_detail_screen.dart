@@ -190,7 +190,7 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
         final preco = item.preco != null
             ? ' (${AppUtils.formatMoney(item.preco!)})'
             : '';
-        buffer.writeln('  • ${item.quantidade}x ${item.nome}$preco');
+        buffer.writeln('  • ${AppUtils.formatQuantity(item.quantidade)}x ${item.nome}$preco');
       }
     }
 
@@ -200,7 +200,7 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
         final preco = item.preco != null
             ? ' - ${AppUtils.formatMoney(item.preco!)}${item.quantidade > 1 ? ' (total: ${AppUtils.formatMoney(item.precoTotal)})' : ''}'
             : '';
-        buffer.writeln('  • ${item.quantidade}x ${item.nome}$preco');
+        buffer.writeln('  • ${AppUtils.formatQuantity(item.quantidade)}x ${item.nome}$preco');
       }
     }
 
@@ -536,7 +536,7 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${item.quantidade} un${item.preco != null ? ' x ${AppUtils.formatMoney(item.preco!)}' : ''}',
+              '${AppUtils.formatQuantity(item.quantidade)} un${item.preco != null ? ' x ${AppUtils.formatMoney(item.preco!)}' : ''}',
               style: TextStyle(
                 color: item.comprado
                     ? Colors.grey.shade400

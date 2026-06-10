@@ -43,13 +43,13 @@ class OCRService {
       final cleanLine = line.trim();
       if (cleanLine.isEmpty || cleanLine.length < 2) continue;
 
-      // Tenta extrair quantidade se começar com número (ex: "2 leite")
-      int quantidade = 1;
+      // Tenta extrair quantidade se começar com número (ex: "2 leite" ou "2.5 carne")
+      double quantidade = 1.0;
       String nome = cleanLine;
 
       final match = RegExp(r'^(\d+)\s*(.*)$').firstMatch(cleanLine);
       if (match != null) {
-        quantidade = int.tryParse(match.group(1) ?? '1') ?? 1;
+        quantidade = double.tryParse(match.group(1)?.replaceAll(',', '.') ?? '1') ?? 1.0;
         nome = match.group(2) ?? cleanLine;
       }
 

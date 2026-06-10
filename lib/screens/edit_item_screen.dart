@@ -37,7 +37,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
 
     _nomeController = TextEditingController(text: widget.item?.nome ?? '');
     _quantidadeController = TextEditingController(
-      text: widget.item?.quantidade.toString() ?? '1',
+      text: widget.item != null ? AppUtils.formatQuantity(widget.item!.quantidade) : '1',
     );
     _precoController = TextEditingController(
       text: widget.item?.preco != null 
@@ -135,7 +135,8 @@ class _EditItemScreenState extends State<EditItemScreen> {
     }
     // ----------------------------------------------------------------------------------
 
-    final quantidade = int.tryParse(_quantidadeController.text) ?? 1;
+    final quantidadeText = _quantidadeController.text.replaceAll(',', '.');
+    final quantidade = double.tryParse(quantidadeText) ?? 1.0;
 
     // Bug 4 fix: remove separador de milhar antes de trocar vírgula por ponto
     // Suporta: "1.500,50" → 1500.50, "10,50" → 10.50, "10.50" → 10.50
@@ -216,8 +217,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
                         border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.numbers),
                       ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     ),
                   ),
                 ),
@@ -449,7 +449,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
                   if (_precoAtual != null) ...[
                     const SizedBox(height: 4),
                     Text(
-                      'Total: ${AppUtils.formatMoney(_precoAtual! * (int.tryParse(_quantidadeController.text) ?? 1))}',
+                      'Total: ${AppUtils.formatMoney(_precoAtual! * (double.tryParse(_quantidadeController.text.replaceAll(',', '.')) ?? 1.0))}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.deepPurple,
