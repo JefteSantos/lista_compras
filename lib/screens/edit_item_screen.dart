@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../utils/currency_input_formatter.dart';
 import 'package:provider/provider.dart';
 import 'confirmation_dialog.dart';
 import '../models/item.dart';
 import '../models/categorias_provider.dart';
 import 'package:lista_compras/models/listas_provider.dart';
 import 'package:lista_compras/utils/app_utils.dart';
-import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../l10n/generated/app_localizations.dart';
 
@@ -41,7 +41,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
     );
     _precoController = TextEditingController(
       text: widget.item?.preco != null 
-          ? NumberFormat.simpleCurrency(locale: 'pt_BR', name: '').format(widget.item!.preco).trim()
+          ? _formatarPrecoInicial(widget.item!.preco!)
           : '',
     );
     _observacoesController = TextEditingController(
@@ -162,7 +162,32 @@ class _EditItemScreenState extends State<EditItemScreen> {
     Navigator.of(context).pop(item);
   }
 
-  /// Getter que faz o parse do campo de preço usando a mesma lógica do _salvarItem.
+  /// Formata um preço existente no formato do formatter de banco.
+  /// Ex: 12.34 → "12,34", 1500.50 → "1.500,50", 0.5 → "0,50"
+  String _formatarPrecoInicial(double preco) {
+    final centavos = (preco * 100).round();
+    if (centavos == 0) return '';
+    final reais = centavos ~/ 100;
+    final cents = (centavos % 100).toString().padLeft(2, '0');
+    // Formata parte inteira com separador de milhar
+    final parteInteira = _formatarComMilhar(reais);
+    return '$parteInteira,$cents';
+  }
+
+  /// Formata um inteiro com separador de milhar (ponto).
+  String _formatarComMilhar(int valor) {
+    final str = valor.toString();
+    if (str.length <= 3) return str;
+    final buffer = StringBuffer();
+    final mod = str.length % 3;
+    for (int i = 0; i < str.length; i++) {
+      if (i != 0 && (i - mod) % 3 == 0) buffer.write('.');
+      buffer.write(str[i]);
+    }
+    return buffer.toString();
+  }
+
+  /// Getter que faz o parse do campo de preço no formato banco (ex: "1.234,56").
   /// Retorna null se o campo estiver vazio ou inválido.
   double? get _precoAtual {
     if (_precoController.text.trim().isEmpty) return null;
@@ -235,12 +260,10 @@ class _EditItemScreenState extends State<EditItemScreen> {
                         prefixIcon: const Icon(Icons.attach_money),
                         prefixText: 'R\$ ',
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
+                      keyboardType: TextInputType.number,
                       inputFormatters: [
-                        // Allow digits and one comma or dot
-                        FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
+                        FilteringTextInputFormatter.digitsOnly,
+                        CurrencyInputFormatter(),
                       ],
                     ),
                   ),
