@@ -33,7 +33,12 @@ class DriveBackupService {
     }
     if (account == null) return null;
 
-    final authHeaders = await account.authHeaders;
+    // No google_sign_in v7, `authHeaders` não existe mais na conta.
+    // Os headers de autorização agora vêm do AuthService, que usa o
+    // authorizationClient da conta internamente.
+    final authHeaders = await AuthService.getAuthHeaders();
+    if (authHeaders == null) return null;
+
     return drive.DriveApi(_AuthClient(authHeaders));
   }
 
@@ -212,7 +217,7 @@ class DriveBackupService {
     final fileId = fileInfo.id!;
 
     final revisions = await api.revisions.list(fileId, $fields: 'revisions(id, modifiedTime)');
-    
+
     if (revisions.revisions == null || revisions.revisions!.isEmpty) return null;
 
     // A última revisão é a atual. Pegamos a penúltima (se houver).

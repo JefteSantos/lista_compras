@@ -281,7 +281,9 @@ class ExportService {
         }
       }
 
-      String csvData = const ListToCsvConverter().convert(rows);
+      // csv 8.0.0: ListToCsvConverter foi removido. A classe Csv substitui o
+      // antigo CsvCodec/ListToCsvConverter e usa .encode() em vez de .convert().
+      String csvData = Csv().encode(rows);
       final fileName = _generateFileName('csv');
 
       if (kIsWeb) {
