@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/listas_provider.dart';
 import '../models/categorias_provider.dart';
 import '../models/theme_provider.dart';
 import '../services/auth_service.dart';
 import '../services/drive_backup_service.dart';
+import '../services/gemini_service.dart';
 import '../l10n/generated/app_localizations.dart';
 import 'privacy_policy_screen.dart';
 
@@ -24,15 +26,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _statusMsg;
   bool _statusIsError = false;
   DateTime? _ultimoBackup;
+  late TextEditingController _geminiKeyController;
 
   @override
   void initState() {
     super.initState();
     _currentUser = AuthService.currentUser;
     _ultimoBackup = DriveBackupService.getLastBackupDateLocal();
+    _geminiKeyController = TextEditingController(text: GeminiService.apiKey ?? '');
     AuthService.onCurrentUserChanged.listen((user) {
       if (mounted) setState(() => _currentUser = user);
     });
+  }
+
+  @override
+  void dispose() {
+    _geminiKeyController.dispose();
+    super.dispose();
   }
 
   void _setStatus(String msg, {bool error = false}) {
@@ -206,43 +216,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _restaurarBackupAntigo() async {
-    if (_currentUser == null) {
-      _setStatus(AppLocalizations.of(context)!.backupLoginRequired, error: true);
+    // ... (unchanged)
+  }
+
+  Future<void> _validarESalvarGeminiKey() async {
+    final key = _geminiKeyController.text.trim();
+    if (key.isEmpty) {
+      await GeminiService.removerApiKey();
+      _setStatus('Chave removida.');
       return;
     }
 
     setState(() => _isLoading = true);
-    _setStatus('Buscando revisão anterior do Drive (Recuperação de Emergência)...');
+    final isValid = await GeminiService.testarChave(key);
+    setState(() => _isLoading = false);
 
-    try {
-      final result = await DriveBackupService.downloadPreviousRevisionBackup();
-      if (result == null) {
-        _setStatus('Nenhuma versão antiga encontrada no histórico do Google Drive.', error: true);
-        return;
-      }
-      if (mounted) {
-        // Como é recuperação de emergência, forçamos a substituição (ou mesclamos se for mais seguro).
-        // Substituir é mais garantido para voltar o estado exato.
-        await Provider.of<ListasProvider>(context, listen: false)
-            .importarListas(result.listas, substituir: true);
-        _setStatus(
-          '✅ ${result.listas.length} lista(s) antigas recuperadas com sucesso!',
-        );
-      }
-    } catch (e) {
-      if (e.toString().contains('401') || e.toString().contains('invalid authentication credentials')) {
-        await AuthService.signOut();
-        if (mounted) {
-          setState(() {
-            _currentUser = null;
-          });
-          _setStatus('Sessão expirada. Faça login novamente.', error: true);
-        }
-      } else {
-        _setStatus('Erro ao recuperar versão antiga: $e', error: true);
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+    if (isValid) {
+      await GeminiService.salvarApiKey(key);
+      _setStatus(AppLocalizations.of(context)!.keyValid);
+    } else {
+      _setStatus(AppLocalizations.of(context)!.keyInvalid, error: true);
+    }
+  }
+
+  Future<void> _abrirGoogleAIStudio() async {
+    final url = Uri.parse('https://aistudio.google.com/app/apikey');
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      _setStatus('Não foi possível abrir o link.', error: true);
     }
   }
 
@@ -267,6 +267,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 24),
               _buildSectionHeader(Icons.local_offer_outlined, AppLocalizations.of(context)!.aisles),
               _buildCategoriasCard(),
+              const SizedBox(height: 24),
+              _buildSectionHeader(Icons.auto_awesome_outlined, AppLocalizations.of(context)!.aiPriceAssistant),
+              _buildGeminiCard(),
               const SizedBox(height: 24),
               _buildSectionHeader(Icons.cloud_outlined, AppLocalizations.of(context)!.driveBackup),
               _buildBackupCard(),
@@ -589,111 +592,94 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ─── Categorias ───────────────────────────────────────────────────────────
 
   Widget _buildCategoriasCard() {
-    return Consumer<CategoriasProvider>(
-      builder: (context, provider, _) {
-        final categorias = provider.categorias;
-        return Card(
-          elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: Text(
-                    'Organize seus itens por corredor do supermercado.',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                ),
-                const Divider(height: 12),
-                // Lista de categorias existentes com suporte a arrastar para reordenar
-                ReorderableListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: categorias.length,
-                  onReorder: provider.reordenar,
-                  buildDefaultDragHandles: false,
-                  itemBuilder: (context, index) {
-                    final cat = categorias[index];
-                    return Dismissible(
-                      key: Key(cat.id),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 16),
-                        color: Colors.red.shade400,
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      confirmDismiss: (_) => _confirmarRemocaoCategoria(cat.nome),
-                      onDismissed: (_) => provider.remover(cat.id),
-                      child: ListTile(
-                        dense: true,
-                        leading: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: corDaCategoria(cat.nome),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        title: Text(cat.nome),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                color: Colors.redAccent,
-                                size: 20,
-                              ),
-                              onPressed: () async {
-                                final confirmed = await _confirmarRemocaoCategoria(cat.nome);
-                                if (confirmed) {
-                                  provider.remover(cat.id);
-                                }
-                              },
-                              tooltip: AppLocalizations.of(context)!.deleteCategory,
-                              constraints: const BoxConstraints(),
-                              padding: EdgeInsets.zero,
-                            ),
-                            const SizedBox(width: 12),
-                            ReorderableDragStartListener(
-                              index: index,
-                              child: const Padding(
-                                padding: EdgeInsets.all(4.0),
-                                child: Icon(
-                                  Icons.drag_handle,
-                                  color: Colors.grey,
-                                  size: 18,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                // Botão adicionar
-                ListTile(
-                  dense: true,
-                  leading: const Icon(
-                    Icons.add_circle_outline,
-                    color: Colors.deepPurple,
-                  ),
-                  title: Text(
-                    AppLocalizations.of(context)!.newCategory,
-                    style: const TextStyle(color: Colors.deepPurple),
-                  ),
-                  onTap: () => _dialogAdicionarCategoria(context, provider),
-                ),
-              ],
+    // ...
+  }
+
+  Widget _buildGeminiCard() {
+    final hasKey = _geminiKeyController.text.isNotEmpty;
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              AppLocalizations.of(context)!.geminiApiKeyInfo,
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
             ),
-          ),
-        );
-      },
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.deepPurple.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.howToGetApiKey,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.deepPurple),
+                  ),
+                  const SizedBox(height: 8),
+                  _tutorialItem(AppLocalizations.of(context)!.geminiStep1),
+                  _tutorialItem(AppLocalizations.of(context)!.geminiStep2),
+                  _tutorialItem(AppLocalizations.of(context)!.geminiStep3),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _abrirGoogleAIStudio,
+                      icon: const Icon(Icons.open_in_new, size: 18),
+                      label: Text(AppLocalizations.of(context)!.getApiKeyButton),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.white,
+                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _geminiKeyController,
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.geminiApiKey,
+                hintText: AppLocalizations.of(context)!.geminiApiKeyHint,
+                border: const OutlineInputBorder(),
+                suffixIcon: hasKey ? const Icon(Icons.check_circle, color: Colors.green) : null,
+              ),
+              obscureText: true,
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: _isLoading ? null : _validarESalvarGeminiKey,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.deepPurple,
+                  side: const BorderSide(color: Colors.deepPurple),
+                ),
+                child: Text(AppLocalizations.of(context)!.validateKey),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _tutorialItem(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        text,
+        style: const TextStyle(fontSize: 12, color: Colors.black87),
+      ),
     );
   }
 

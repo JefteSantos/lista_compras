@@ -8,6 +8,8 @@ import '../models/categorias_provider.dart';
 import 'package:lista_compras/models/listas_provider.dart';
 import 'package:lista_compras/utils/app_utils.dart';
 import 'package:uuid/uuid.dart';
+import '../services/gemini_service.dart';
+import 'settings_screen.dart';
 import '../l10n/generated/app_localizations.dart';
 
 class EditItemScreen extends StatefulWidget {
@@ -29,6 +31,8 @@ class _EditItemScreenState extends State<EditItemScreen> {
   String? _categoriaSelecionada;
   bool _isEditing = false;
   String _ultimoNomeSugerido = ''; // evita sugestão repetida para o mesmo nome
+  bool _isAnalyzing = false;
+  String? _geminiAnalysis;
 
   @override
   void initState() {
@@ -162,6 +166,56 @@ class _EditItemScreenState extends State<EditItemScreen> {
     Navigator.of(context).pop(item);
   }
 
+  Future<void> _analisarPrecoComIA() async {
+    final nome = _nomeController.text.trim();
+    final preco = _precoAtual;
+
+    if (nome.isEmpty || preco == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Informe o nome e o preço para analisar.')),
+      );
+      return;
+    }
+
+    if (GeminiService.apiKey == null || GeminiService.apiKey!.isEmpty) {
+      final confirm = await showGenericConfirmationDialog(
+        context,
+        title: AppLocalizations.of(context)!.aiPriceAssistant,
+        content: AppLocalizations.of(context)!.noApiKey,
+        confirmText: 'CONFIGURAR',
+        cancelText: AppLocalizations.of(context)!.cancel,
+      );
+      if (confirm && mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isAnalyzing = true;
+      _geminiAnalysis = null;
+    });
+
+    try {
+      final result = await GeminiService.analisarPreco(nome, preco);
+      if (mounted) {
+        setState(() {
+          _geminiAnalysis = result;
+          _isAnalyzing = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isAnalyzing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro na análise: $e')),
+        );
+      }
+    }
+  }
+
   /// Formata um preço existente no formato do formatter de banco.
   /// Ex: 12.34 → "12,34", 1500.50 → "1.500,50", 0.5 → "0,50"
   String _formatarPrecoInicial(double preco) {
@@ -259,6 +313,20 @@ class _EditItemScreenState extends State<EditItemScreen> {
                         border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.attach_money),
                         prefixText: 'R\$ ',
+                        suffixIcon: _isAnalyzing
+                            ? const Padding(
+                                padding: EdgeInsets.all(12),
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              )
+                            : IconButton(
+                                icon: const Icon(Icons.auto_awesome, color: Colors.deepPurple),
+                                onPressed: _analisarPrecoComIA,
+                                tooltip: AppLocalizations.of(context)!.analyzePrice,
+                              ),
                       ),
                       keyboardType: TextInputType.number,
                       inputFormatters: [
@@ -417,6 +485,45 @@ class _EditItemScreenState extends State<EditItemScreen> {
                       ),
                     ],
                   ),
+                  // --- SEÇÃO DE IA GEMINI ---
+                  if (_geminiAnalysis != null) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.deepPurple.shade100),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.auto_awesome, size: 14, color: Colors.deepPurple),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  _geminiAnalysis!,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            AppLocalizations.of(context)!.geminiDisclaimer,
+                            style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontStyle: FontStyle.italic),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  // ---------------------------
                   // --- SEÇÃO DE HISTÓRICO E TENDÊNCIA ---
                   if (_nomeController.text.isNotEmpty) ...[
                     Consumer<ListasProvider>(

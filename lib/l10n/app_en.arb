@@ -237,5 +237,21 @@
   "descName": "Desc / Name",
   "qty": "Qty",
   "val": "Value",
-  "grandTotal": "GRAND TOTAL:"
+  "grandTotal": "GRAND TOTAL:",
+  "aiPriceAssistant": "Price Assistant (AI)",
+  "geminiApiKey": "Google Gemini API Key",
+  "geminiApiKeyHint": "Paste your key here",
+  "geminiApiKeyInfo": "The key is used only locally to query prices. We do not have access to it.",
+  "howToGetApiKey": "How to get a free key?",
+  "geminiStep1": "1. Go to Google AI Studio",
+  "geminiStep2": "2. Click 'Create API Key'",
+  "geminiStep3": "3. Copy the generated key and paste below",
+  "getApiKeyButton": "GET KEY ON GOOGLE",
+  "validateKey": "VALIDATE AND SAVE",
+  "keyValid": "Valid key! Now you can analyze prices.",
+  "keyInvalid": "Invalid key. Check and try again.",
+  "analyzePrice": "Analyze Price",
+  "analyzing": "Analyzing...",
+  "noApiKey": "Configure the API key in Settings to use this feature.",
+  "geminiDisclaimer": "Gemini may make mistakes. Check important info."
 }
