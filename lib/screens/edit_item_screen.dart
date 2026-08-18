@@ -287,6 +287,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
             Row(
               children: [
                 Expanded(
+                  flex: 2,
                   child: Semantics(
                     label: 'item_quantidade',
                     child: TextField(
@@ -303,6 +304,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
                 const SizedBox(width: 16),
 
                 Expanded(
+                  flex: 3,
                   child: Semantics(
                     label: 'item_preco',
                     child: TextField(
@@ -439,6 +441,103 @@ class _EditItemScreenState extends State<EditItemScreen> {
                 );
               },
             ),
+            
+            // --- NOVO QUADRO DE IA GEMINI (ABAIXO DO CORREDOR) ---
+            if (_geminiAnalysis != null) ...[
+              const SizedBox(height: 16),
+              Builder(
+                builder: (context) {
+                  final parts = _geminiAnalysis!.split('|');
+                  final statusRaw = parts[0].replaceAll('`', '').trim().toLowerCase();
+                  final precoMedio = parts.length > 1 ? parts[1].trim() : '';
+                  final dica = parts.length > 2 ? parts[2].trim() : '';
+                  
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
+                  Color color = Colors.grey;
+                  IconData icon = Icons.info_outline;
+                  String label = parts[0].replaceAll('`', '').trim();
+
+                  // Mapeamento inteligente de cores adaptado para Dark Mode
+                  if (statusRaw.contains('barato') || statusRaw.contains('excelente') || statusRaw.contains('ótimo') || statusRaw.contains('bom')) {
+                    color = isDark ? Colors.green.shade400 : Colors.green.shade700;
+                    icon = Icons.sentiment_very_satisfied;
+                  } else if (statusRaw.contains('justo') || statusRaw.contains('médio') || statusRaw.contains('normal')) {
+                    color = isDark ? Colors.blue.shade400 : Colors.blue.shade700;
+                    icon = Icons.thumbs_up_down;
+                  } else if (statusRaw.contains('caro') || statusRaw.contains('alto') || statusRaw.contains('caríssimo')) {
+                    color = isDark ? Colors.red.shade400 : Colors.red.shade700;
+                    icon = Icons.warning_amber_rounded;
+                  }
+
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(top: 8, bottom: 16),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: color.withOpacity(0.4), width: 2),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(icon, color: color, size: 32),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                label.replaceAll('`', '').trim().toUpperCase(),
+                                style: TextStyle(
+                                  color: color,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 15,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                              if (precoMedio.isNotEmpty &&
+                                  precoMedio != '—') ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Faixa de mercado: '
+                                  '${precoMedio.replaceAll('`', '').trim()}',
+                                  style: TextStyle(
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white.withOpacity(0.9)
+                                        : color,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                  ),
+                                  softWrap: true,
+                                ),
+                              ],
+                              if (dica.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  dica.replaceAll('`', '').trim(),
+                                  style: TextStyle(
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white.withOpacity(0.7)
+                                        : Colors.grey.shade800,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  softWrap: true,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
             const SizedBox(height: 24),
 
             Container(
@@ -485,45 +584,6 @@ class _EditItemScreenState extends State<EditItemScreen> {
                       ),
                     ],
                   ),
-                  // --- SEÇÃO DE IA GEMINI ---
-                  if (_geminiAnalysis != null) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.deepPurple.shade100),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.auto_awesome, size: 14, color: Colors.deepPurple),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  _geminiAnalysis!,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            AppLocalizations.of(context)!.geminiDisclaimer,
-                            style: TextStyle(fontSize: 10, color: Colors.grey.shade500, fontStyle: FontStyle.italic),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                  // ---------------------------
                   // --- SEÇÃO DE HISTÓRICO E TENDÊNCIA ---
                   if (_nomeController.text.isNotEmpty) ...[
                     Consumer<ListasProvider>(

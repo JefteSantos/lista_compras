@@ -16,15 +16,14 @@ class _PaywallScreenState extends State<PaywallScreen> {
   void _comprar() async {
     setState(() => _isLoading = true);
     final iap = Provider.of<IapProvider>(context, listen: false);
-    
     // Chama o Mock de compra
     final success = await iap.comprarProMock();
-    
+
     if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (success) {
-       ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context)!.proWelcome),
           backgroundColor: Colors.green,
@@ -43,22 +42,32 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.deepPurple.shade50,
+      backgroundColor:
+          isDark ? const Color(0xFF121212) : Colors.deepPurple.shade50,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.deepPurple),
+        iconTheme:
+            IconThemeData(color: isDark ? Colors.white : Colors.deepPurple),
         actions: [
           TextButton(
             onPressed: () {
               // Lógica de restaurar compras
-              Provider.of<IapProvider>(context, listen: false).restaurarComprasMock();
+              Provider.of<IapProvider>(context, listen: false)
+                  .restaurarComprasMock();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Buscando compras anteriores...')),
               );
             },
-            child: Text(AppLocalizations.of(context)!.proRestore),
+            child: Text(
+              AppLocalizations.of(context)!.proRestore,
+              style: TextStyle(
+                  color:
+                      isDark ? Colors.deepPurple.shade200 : Colors.deepPurple),
+            ),
           )
         ],
       ),
@@ -75,52 +84,68 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 color: Colors.amber,
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Não Esquece! PRO',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple,
+                  color: isDark ? Colors.deepPurple.shade200 : Colors.deepPurple,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 AppLocalizations.of(context)!.proSubtitle,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.black54),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
               ),
               const Spacer(),
               // Benefícios
-              _buildFeatureRow(Icons.document_scanner, AppLocalizations.of(context)!.proFeatureOcr),
-              _buildFeatureRow(Icons.picture_as_pdf, AppLocalizations.of(context)!.proFeatureExport),
-              _buildFeatureRow(Icons.trending_up, AppLocalizations.of(context)!.proFeatureHistory),
+              _buildFeatureRow(Icons.document_scanner,
+                  AppLocalizations.of(context)!.proFeatureOcr, isDark),
+              _buildFeatureRow(Icons.picture_as_pdf,
+                  AppLocalizations.of(context)!.proFeatureExport, isDark),
+              _buildFeatureRow(Icons.trending_up,
+                  AppLocalizations.of(context)!.proFeatureHistory, isDark),
               const Spacer(),
-              
+
               // Preço
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDark ? Colors.grey.shade900 : Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.deepPurple.shade100, width: 2),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.deepPurple.shade800
+                        : Colors.deepPurple.shade100,
+                    width: 2,
+                  ),
                 ),
                 child: Column(
                   children: [
                     Text(
                       AppLocalizations.of(context)!.proPayOnce,
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.green),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'R\$ 19,90',
-                      style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w900,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
-              
+
               // Botão de Comprar
               SizedBox(
                 height: 56,
@@ -137,7 +162,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
                       ? const CircularProgressIndicator(color: Colors.white)
                       : Text(
                           AppLocalizations.of(context)!.proUnlock,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                 ),
               ),
@@ -149,17 +175,22 @@ class _PaywallScreenState extends State<PaywallScreen> {
     );
   }
 
-  Widget _buildFeatureRow(IconData icon, String text) {
+  Widget _buildFeatureRow(IconData icon, String text, bool isDark) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12.0),
       child: Row(
         children: [
-          Icon(icon, color: Colors.deepPurple),
+          Icon(icon,
+              color: isDark ? Colors.deepPurple.shade200 : Colors.deepPurple),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.white : Colors.black,
+              ),
             ),
           ),
           const Icon(Icons.check_circle, color: Colors.green),

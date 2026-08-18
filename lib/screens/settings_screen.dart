@@ -216,7 +216,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _restaurarBackupAntigo() async {
-    // ... (unchanged)
+    setState(() => _isLoading = true);
+    try {
+      final success = await DriveBackupService.downloadPreviousRevisionBackup(
+        substituir: true,
+      );
+
+      if (!mounted) return;
+
+      if (success) {
+        // Recarrega o provedor de listas após a restauração
+        Provider.of<ListasProvider>(context, listen: false).carregarListas();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Backup anterior restaurado com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Nenhum backup anterior encontrado.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e) {
+      if (e.toString().contains('401')) {
+        AuthService.signOut();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sessão expirada. Entre novamente.')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao restaurar: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _validarESalvarGeminiKey() async {
@@ -592,7 +630,112 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // ─── Categorias ───────────────────────────────────────────────────────────
 
   Widget _buildCategoriasCard() {
-    // ...
+    return Consumer<CategoriasProvider>(
+      builder: (context, provider, _) {
+        final categorias = provider.categorias;
+        return Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Text(
+                    'Organize seus itens por corredor do supermercado.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                ),
+                const Divider(height: 12),
+                // Lista de categorias existentes com suporte a arrastar para reordenar
+                ReorderableListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: categorias.length,
+                  onReorder: provider.reordenar,
+                  buildDefaultDragHandles: false,
+                  itemBuilder: (context, index) {
+                    final cat = categorias[index];
+                    return Dismissible(
+                      key: Key(cat.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 16),
+                        color: Colors.red.shade400,
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      confirmDismiss: (_) => _confirmarRemocaoCategoria(cat.nome),
+                      onDismissed: (_) => provider.remover(cat.id),
+                      child: ListTile(
+                        dense: true,
+                        leading: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: corDaCategoria(cat.nome),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        title: Text(cat.nome),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.redAccent,
+                                size: 20,
+                              ),
+                              onPressed: () async {
+                                final confirmed = await _confirmarRemocaoCategoria(cat.nome);
+                                if (confirmed) {
+                                  provider.remover(cat.id);
+                                }
+                              },
+                              tooltip: AppLocalizations.of(context)!.deleteCategory,
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.zero,
+                            ),
+                            const SizedBox(width: 12),
+                            ReorderableDragStartListener(
+                              index: index,
+                              child: const Padding(
+                                padding: EdgeInsets.all(4.0),
+                                child: Icon(
+                                  Icons.drag_handle,
+                                  color: Colors.grey,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                // Botão adicionar
+                ListTile(
+                  dense: true,
+                  leading: const Icon(
+                    Icons.add_circle_outline,
+                    color: Colors.deepPurple,
+                  ),
+                  title: Text(
+                    AppLocalizations.of(context)!.newCategory,
+                    style: const TextStyle(color: Colors.deepPurple),
+                  ),
+                  onTap: () => _dialogAdicionarCategoria(context, provider),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildGeminiCard() {
@@ -678,7 +821,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 12, color: Colors.black87),
+        style: TextStyle(
+          fontSize: 12,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white70
+              : Colors.black87,
+        ),
       ),
     );
   }

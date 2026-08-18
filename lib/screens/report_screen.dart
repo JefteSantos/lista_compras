@@ -403,10 +403,11 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildFooterTotals(double comprado, double aberto, double total) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Colors.grey.shade900 : Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),

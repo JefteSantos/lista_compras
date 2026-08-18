@@ -81,10 +81,12 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
               ),
               child: SelectableText(
                 codigo,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
                   fontFamily: 'monospace',
-                  color: Colors.black87,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white70
+                      : Colors.black87,
                 ),
               ),
             ),
@@ -517,7 +519,9 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
           duration: const Duration(milliseconds: 300),
           style: TextStyle(
             decoration: item.comprado ? TextDecoration.lineThrough : null,
-            color: item.comprado ? Colors.grey : Theme.of(context).textTheme.bodyLarge?.color ?? Colors.black87,
+            color: item.comprado
+            ? Colors.grey
+            : Theme.of(context).textTheme.bodyLarge?.color,
             fontWeight: FontWeight.w500,
             fontSize: 14,
           ),
@@ -540,7 +544,9 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
               style: TextStyle(
                 color: item.comprado
                     ? Colors.grey.shade400
-                    : Colors.grey.shade700,
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey.shade300
+                        : Colors.grey.shade700),
               ),
             ),
             if (item.observacoes != null && item.observacoes!.isNotEmpty)
@@ -559,7 +565,9 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                 AppUtils.formatMoney(item.precoTotal),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: item.comprado ? Colors.grey : Colors.black,
+                  color: item.comprado
+                      ? Colors.grey
+                      : Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               )
             : null,

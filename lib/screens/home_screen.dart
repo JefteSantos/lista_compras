@@ -190,9 +190,13 @@ class _HomeScreenState extends State<HomeScreen>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Cole abaixo o código da lista que você recebeu:',
-              style: TextStyle(color: Colors.black54, fontSize: 13),
+              style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white70
+                      : Colors.black54,
+                  fontSize: 13),
             ),
             const SizedBox(height: 16),
             Semantics(
