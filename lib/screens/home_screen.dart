@@ -39,7 +39,49 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 
+  Future<bool> _verificarLimiteListas(BuildContext context) async {
+    final iap = Provider.of<IapProvider>(context, listen: false);
+    final listasProvider = Provider.of<ListasProvider>(context, listen: false);
+    if (!iap.podeCriarLista(listasProvider.listas.length)) {
+      await showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          icon: const Icon(Icons.lock_outline, color: Colors.deepPurple, size: 48),
+          title: const Text('Limite de Listas Atingido'),
+          content: Text(
+            'No plano gratuito você pode criar até ${IapProvider.maxListasFree} listas (ativas ou finalizadas).\n\n'
+            'Exclua uma lista antiga para liberar espaço ou torne-se PRO para ter listas ilimitadas!',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('ENTENDI'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const PaywallScreen()),
+                );
+              },
+              child: const Text('CONHECER O PRO'),
+            ),
+          ],
+        ),
+      );
+      return false;
+    }
+    return true;
+  }
+
   void _criarNovaLista() async {
+    if (!await _verificarLimiteListas(context)) return;
+    if (!mounted) return;
+
     final controller = TextEditingController();
     final String? nome = await showDialog<String>(
       context: context,
@@ -108,6 +150,9 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _importarListaTexto() async {
+    if (!await _verificarLimiteListas(context)) return;
+    if (!mounted) return;
+
     final controller = TextEditingController();
     final String? texto = await showDialog<String>(
       context: context,
@@ -166,6 +211,9 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _importarPorCodigo() async {
+    if (!await _verificarLimiteListas(context)) return;
+    if (!mounted) return;
+
     final controller = TextEditingController();
     final ListaCompras? lista = await showDialog<ListaCompras>(
       context: context,
@@ -317,6 +365,9 @@ class _HomeScreenState extends State<HomeScreen>
           ),
           ElevatedButton(
             onPressed: () async {
+              if (!await _verificarLimiteListas(context)) return;
+              if (!context.mounted) return;
+
               final controller = TextEditingController(
                 text: 'Scanner ${DateTime.now().day}/${DateTime.now().month}',
               );
@@ -369,15 +420,30 @@ class _HomeScreenState extends State<HomeScreen>
           IconButton(
             icon: const Icon(Icons.camera_alt),
             onPressed: () async {
-              final isPro = Provider.of<IapProvider>(context, listen: false).isPro;
-              if (!isPro) {
+              final iap = Provider.of<IapProvider>(context, listen: false);
+              if (!iap.podeUsarOcr()) {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const PaywallScreen()),
                 );
                 return;
               }
+
+              final isFreeTrial = !iap.isPro && iap.ocrUsosCount == 0;
               final result = await OCRService.scanList(fromCamera: true);
+
               if (result.isNotEmpty && context.mounted) {
+                if (isFreeTrial) {
+                  await iap.registrarUsoOcr();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('✨ Você usou seu teste grátis do Scanner OCR! Seja PRO para scans ilimitados.'),
+                        backgroundColor: Colors.deepPurple,
+                        duration: Duration(seconds: 4),
+                      ),
+                    );
+                  }
+                }
                 _exibirConfirmacaoOCR(context, result);
               }
             },
@@ -568,6 +634,9 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   void _duplicarLista(ListaCompras lista) async {
+    if (!await _verificarLimiteListas(context)) return;
+    if (!mounted) return;
+
     final provider = Provider.of<ListasProvider>(context, listen: false);
     final novaLista = await provider.duplicarLista(lista);
     if (mounted) {

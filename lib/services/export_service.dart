@@ -281,7 +281,7 @@ class ExportService {
         }
       }
 
-      String csvData = const ListToCsvConverter().convert(rows);
+      String csvData = csv.encode(rows);
       final fileName = _generateFileName('csv');
 
       if (kIsWeb) {
