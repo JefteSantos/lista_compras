@@ -46,6 +46,7 @@ void main() async {
   try {
     await HiveService.init();
     await HomeWidgetService.init();
+    await AuthService.initialize();
   } catch (e) {
     debugPrint("Erro durante a inicialização de serviços: $e");
   }

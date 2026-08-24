@@ -33,7 +33,14 @@ class DriveBackupService {
     }
     if (account == null) return null;
 
-    final authHeaders = await account.authHeaders;
+    final authResult = await account.authorizationClient.authorizeScopes([
+      'https://www.googleapis.com/auth/drive.appdata',
+    ]);
+
+    final authHeaders = {
+      'Authorization': 'Bearer ${authResult.accessToken}',
+      'X-Goog-AuthUser': '0',
+    };
     return drive.DriveApi(_AuthClient(authHeaders));
   }
 
