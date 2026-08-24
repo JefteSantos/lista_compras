@@ -434,16 +434,16 @@ class _HomeScreenState extends State<HomeScreen>
               if (result.isNotEmpty && context.mounted) {
                 if (isFreeTrial) {
                   await iap.registrarUsoOcr();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('✨ Você usou seu teste grátis do Scanner OCR! Seja PRO para scans ilimitados.'),
-                        backgroundColor: Colors.deepPurple,
-                        duration: Duration(seconds: 4),
-                      ),
-                    );
-                  }
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✨ Você usou seu teste grátis do Scanner OCR! Seja PRO para scans ilimitados.'),
+                      backgroundColor: Colors.deepPurple,
+                      duration: Duration(seconds: 4),
+                    ),
+                  );
                 }
+                if (!context.mounted) return;
                 _exibirConfirmacaoOCR(context, result);
               }
             },

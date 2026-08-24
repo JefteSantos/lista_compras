@@ -613,7 +613,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: categorias.length,
-                  onReorder: provider.reordenar,
+                  onReorderItem: provider.reordenar,
                   buildDefaultDragHandles: false,
                   itemBuilder: (context, index) {
                     final cat = categorias[index];
