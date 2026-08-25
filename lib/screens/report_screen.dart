@@ -528,12 +528,27 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   void _showExportOptions(BuildContext context) {
-    final isPro = Provider.of<IapProvider>(context, listen: false).isPro;
-    if (!isPro) {
+    final iap = Provider.of<IapProvider>(context, listen: false);
+    if (!iap.podeUsarExport()) {
       Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const PaywallScreen()),
       );
       return;
+    }
+
+    final isFreeTrial = !iap.isPro && iap.exportUsosCount == 0;
+
+    void processarUsoTrial() {
+      if (isFreeTrial) {
+        iap.registrarUsoExport();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✨ Você usou seu teste grátis de exportação! Seja PRO para exportar sem limites.'),
+            backgroundColor: Colors.deepPurple,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
     }
 
     showModalBottomSheet(
@@ -554,6 +569,7 @@ class _ReportScreenState extends State<ReportScreen> {
                 title: Text(AppLocalizations.of(context)!.exportPdf),
                 onTap: () {
                   Navigator.pop(ctx);
+                  processarUsoTrial();
                   ExportService.exportToPdf(
                     context,
                     _filteredList,
@@ -567,6 +583,7 @@ class _ReportScreenState extends State<ReportScreen> {
                 title: Text(AppLocalizations.of(context)!.exportExcel),
                 onTap: () {
                   Navigator.pop(ctx);
+                  processarUsoTrial();
                   ExportService.exportToExcel(
                     context,
                     _filteredList,
@@ -582,6 +599,7 @@ class _ReportScreenState extends State<ReportScreen> {
                 title: Text(AppLocalizations.of(context)!.exportCsv),
                 onTap: () {
                   Navigator.pop(ctx);
+                  processarUsoTrial();
                   ExportService.exportToCsv(context, _filteredList, _showItems);
                 },
               ),

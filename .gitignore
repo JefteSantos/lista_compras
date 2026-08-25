@@ -12,7 +12,7 @@
 .svn/
 .swiftpm/
 migrate_working_dir/
-keyinfo.txt
+
 # IntelliJ related
 *.iml
 *.ipr
@@ -47,4 +47,11 @@ app.*.map.json
 
 # Signing credentials — NEVER commit these
 android/key.properties
-android/app/upload-keystore.jks
+android/app/*.jks
+android/app/*.keystore
+*.jks
+*.keystore
+keyinfo.txt
+
+# Android build artifacts
+**/android/**/build/

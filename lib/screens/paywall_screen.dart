@@ -11,29 +11,34 @@ class PaywallScreen extends StatefulWidget {
 }
 
 class _PaywallScreenState extends State<PaywallScreen> {
-  bool _isLoading = false;
+  bool _comprando = false;
 
   void _comprar() async {
-    setState(() => _isLoading = true);
     final iap = Provider.of<IapProvider>(context, listen: false);
-    // Chama o Mock de compra
-    final success = await iap.comprarProMock();
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
-
-    if (success) {
+    if (iap.produtoDetails == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context)!.proWelcome),
-          backgroundColor: Colors.green,
+        const SnackBar(
+          content: Text('Produto não disponível. Tente novamente mais tarde.'),
+          backgroundColor: Colors.red,
         ),
       );
-      Navigator.of(context).pop(); // Fecha a tela de vendas
-    } else {
+      return;
+    }
+
+    setState(() => _comprando = true);
+
+    final started = await iap.comprarPro();
+
+    if (!mounted) return;
+
+    if (!started) {
+      setState(() => _comprando = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.proFailed),
+          content: Text(
+            iap.erroLoja ?? AppLocalizations.of(context)!.proFailed,
+          ),
           backgroundColor: Colors.red,
         ),
       );
@@ -59,7 +64,10 @@ class _PaywallScreenState extends State<PaywallScreen> {
               Provider.of<IapProvider>(context, listen: false)
                   .restaurarComprasMock();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Buscando compras anteriores...')),
+                SnackBar(
+                  content: Text(AppLocalizations.of(context)!.proWelcome),
+                  backgroundColor: Colors.green,
+                ),
               );
             },
             child: Text(
@@ -71,17 +79,21 @@ class _PaywallScreenState extends State<PaywallScreen> {
           )
         ],
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 20),
-              const Icon(
-                Icons.star_rounded,
-                size: 80,
-                color: Colors.amber,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.amber.shade700,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Text(
+              '🔥 OFERTA DE LANÇAMENTO',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 11,
+                letterSpacing: 0.5,
               ),
               const SizedBox(height: 16),
               Text(
@@ -167,17 +179,25 @@ class _PaywallScreenState extends State<PaywallScreen> {
                         ),
                 ),
               ),
-              const SizedBox(height: 32),
             ],
           ),
-        ),
+          const SizedBox(height: 4),
+          Text(
+            AppLocalizations.of(context)!.proPayOnce,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.green,
+              fontSize: 13,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildFeatureRow(IconData icon, String text, bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Row(
         children: [
           Icon(icon,
@@ -193,7 +213,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
               ),
             ),
           ),
-          const Icon(Icons.check_circle, color: Colors.green),
+          const Icon(Icons.check_circle, color: Colors.green, size: 20),
         ],
       ),
     );
