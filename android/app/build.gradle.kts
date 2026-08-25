@@ -43,11 +43,19 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            storePassword = keystoreProperties["storePassword"] as String
-            storeFile = file(keystoreProperties["storeFile"] as String)
+        val hasKeyProperties = keystorePropertiesFile.exists() &&
+                keystoreProperties.containsKey("keyAlias") &&
+                keystoreProperties.containsKey("keyPassword") &&
+                keystoreProperties.containsKey("storePassword") &&
+                keystoreProperties.containsKey("storeFile")
+
+        if (hasKeyProperties) {
+            create("release") {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storePassword = keystoreProperties["storePassword"] as String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+            }
         }
     }
 
@@ -55,31 +63,12 @@ android {
         getByName("debug") {
             signingConfig = signingConfigs.getByName("debug")
         }
-        getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-        }
     }
-
-    applicationVariants.all {
-        val variant = this
-        if (variant.buildType.name == "release") {
-            variant.outputs.all {
-                val output = this as? com.android.build.gradle.internal.api.ApkVariantOutputImpl
-                if (output != null) {
-                    output.outputFileName = "NaoEsquece_v${variant.versionName}.apk"
-                }
-            }
-        }
-    }
-}
-
-kotlin {
-    jvmToolchain(17)
 }
 
 flutter {
     source = "../.."
 }
+
+// Suprime os avisos de validação de dependências do Flutter (Gradle 9+, AGP 9+, Kotlin 2.3+)
+project.extra.set("flutter.android-skip-build-dependency-validation", "true")
