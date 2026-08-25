@@ -1397,6 +1397,102 @@ abstract class AppLocalizations {
   /// In pt, this message translates to:
   /// **'TOTAL GERAL:'**
   String get grandTotal;
+
+  /// No description provided for @aiPriceAssistant.
+  ///
+  /// In pt, this message translates to:
+  /// **'Assistente de Preços (IA)'**
+  String get aiPriceAssistant;
+
+  /// No description provided for @geminiApiKey.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chave de API do Google Gemini'**
+  String get geminiApiKey;
+
+  /// No description provided for @geminiApiKeyHint.
+  ///
+  /// In pt, this message translates to:
+  /// **'Cole sua chave aqui'**
+  String get geminiApiKeyHint;
+
+  /// No description provided for @geminiApiKeyInfo.
+  ///
+  /// In pt, this message translates to:
+  /// **'A chave é usada apenas localmente para consultar preços. Nós não temos acesso a ela.'**
+  String get geminiApiKeyInfo;
+
+  /// No description provided for @howToGetApiKey.
+  ///
+  /// In pt, this message translates to:
+  /// **'Como obter uma chave gratuita?'**
+  String get howToGetApiKey;
+
+  /// No description provided for @geminiStep1.
+  ///
+  /// In pt, this message translates to:
+  /// **'1. Acesse o Google AI Studio'**
+  String get geminiStep1;
+
+  /// No description provided for @geminiStep2.
+  ///
+  /// In pt, this message translates to:
+  /// **'2. Clique em \'Create API Key\''**
+  String get geminiStep2;
+
+  /// No description provided for @geminiStep3.
+  ///
+  /// In pt, this message translates to:
+  /// **'3. Copie a chave gerada e cole abaixo'**
+  String get geminiStep3;
+
+  /// No description provided for @getApiKeyButton.
+  ///
+  /// In pt, this message translates to:
+  /// **'OBTER CHAVE NO GOOGLE'**
+  String get getApiKeyButton;
+
+  /// No description provided for @validateKey.
+  ///
+  /// In pt, this message translates to:
+  /// **'VALIDAR E SALVAR'**
+  String get validateKey;
+
+  /// No description provided for @keyValid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chave válida! Agora você pode analisar preços.'**
+  String get keyValid;
+
+  /// No description provided for @keyInvalid.
+  ///
+  /// In pt, this message translates to:
+  /// **'Chave inválida. Verifique e tente novamente.'**
+  String get keyInvalid;
+
+  /// No description provided for @analyzePrice.
+  ///
+  /// In pt, this message translates to:
+  /// **'Analisar Preço'**
+  String get analyzePrice;
+
+  /// No description provided for @analyzing.
+  ///
+  /// In pt, this message translates to:
+  /// **'Analisando...'**
+  String get analyzing;
+
+  /// No description provided for @noApiKey.
+  ///
+  /// In pt, this message translates to:
+  /// **'Configure a chave de API nas Configurações para usar esta função.'**
+  String get noApiKey;
+
+  /// No description provided for @geminiDisclaimer.
+  ///
+  /// In pt, this message translates to:
+  /// **'O Gemini pode cometer erros. Verifique informações importantes.'**
+  String get geminiDisclaimer;
 }
 
 class _AppLocalizationsDelegate

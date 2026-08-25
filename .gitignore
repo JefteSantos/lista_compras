@@ -54,4 +54,4 @@ android/app/*.keystore
 keyinfo.txt
 
 # Android build artifacts
-**/android/**/build/
+**/android/**/build/

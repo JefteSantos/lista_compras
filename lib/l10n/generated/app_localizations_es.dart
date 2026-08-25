@@ -709,4 +709,55 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get grandTotal => 'TOTAL GENERAL:';
+
+  @override
+  String get aiPriceAssistant => 'Assistente de Preços (IA)';
+
+  @override
+  String get geminiApiKey => 'Chave de API do Google Gemini';
+
+  @override
+  String get geminiApiKeyHint => 'Cole sua chave aqui';
+
+  @override
+  String get geminiApiKeyInfo =>
+      'A chave é usada apenas localmente para consultar preços. Nós não temos acesso a ela.';
+
+  @override
+  String get howToGetApiKey => 'Como obter uma chave gratuita?';
+
+  @override
+  String get geminiStep1 => '1. Acesse o Google AI Studio';
+
+  @override
+  String get geminiStep2 => '2. Clique em \'Create API Key\'';
+
+  @override
+  String get geminiStep3 => '3. Copie a chave gerada e cole abaixo';
+
+  @override
+  String get getApiKeyButton => 'OBTER CHAVE NO GOOGLE';
+
+  @override
+  String get validateKey => 'VALIDAR E SALVAR';
+
+  @override
+  String get keyValid => 'Chave válida! Agora você pode analisar preços.';
+
+  @override
+  String get keyInvalid => 'Chave inválida. Verifique e tente novamente.';
+
+  @override
+  String get analyzePrice => 'Analisar Preço';
+
+  @override
+  String get analyzing => 'Analisando...';
+
+  @override
+  String get noApiKey =>
+      'Configure a chave de API nas Configurações para usar esta função.';
+
+  @override
+  String get geminiDisclaimer =>
+      'O Gemini pode cometer erros. Verifique informações importantes.';
 }

@@ -250,5 +250,21 @@
   "descName": "Desc / Nome",
   "qty": "Qtd",
   "val": "Valor",
-  "grandTotal": "TOTAL GERAL:"
+  "grandTotal": "TOTAL GERAL:",
+  "aiPriceAssistant": "Assistente de Preços (IA)",
+  "geminiApiKey": "Chave de API do Google Gemini",
+  "geminiApiKeyHint": "Cole sua chave aqui",
+  "geminiApiKeyInfo": "A chave é usada apenas localmente para consultar preços. Nós não temos acesso a ela.",
+  "howToGetApiKey": "Como obter uma chave gratuita?",
+  "geminiStep1": "1. Acesse o Google AI Studio",
+  "geminiStep2": "2. Clique em 'Create API Key'",
+  "geminiStep3": "3. Copie a chave gerada e cole abaixo",
+  "getApiKeyButton": "OBTER CHAVE NO GOOGLE",
+  "validateKey": "VALIDAR E SALVAR",
+  "keyValid": "Chave válida! Agora você pode analisar preços.",
+  "keyInvalid": "Chave inválida. Verifique e tente novamente.",
+  "analyzePrice": "Analisar Preço",
+  "analyzing": "Analisando...",
+  "noApiKey": "Configure a chave de API nas Configurações para usar esta função.",
+  "geminiDisclaimer": "O Gemini pode cometer erros. Verifique informações importantes."
 }

@@ -8,6 +8,8 @@ import '../models/categorias_provider.dart';
 import 'package:lista_compras/models/listas_provider.dart';
 import 'package:lista_compras/utils/app_utils.dart';
 import 'package:uuid/uuid.dart';
+import '../services/gemini_service.dart';
+import 'settings_screen.dart';
 import '../l10n/generated/app_localizations.dart';
 
 class EditItemScreen extends StatefulWidget {
@@ -29,6 +31,8 @@ class _EditItemScreenState extends State<EditItemScreen> {
   String? _categoriaSelecionada;
   bool _isEditing = false;
   String _ultimoNomeSugerido = ''; // evita sugestão repetida para o mesmo nome
+  bool _isAnalyzing = false;
+  String? _geminiAnalysis;
 
   @override
   void initState() {
@@ -162,6 +166,56 @@ class _EditItemScreenState extends State<EditItemScreen> {
     Navigator.of(context).pop(item);
   }
 
+  Future<void> _analisarPrecoComIA() async {
+    final nome = _nomeController.text.trim();
+    final preco = _precoAtual;
+
+    if (nome.isEmpty || preco == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Informe o nome e o preço para analisar.')),
+      );
+      return;
+    }
+
+    if (GeminiService.apiKey == null || GeminiService.apiKey!.isEmpty) {
+      final confirm = await showGenericConfirmationDialog(
+        context,
+        title: AppLocalizations.of(context)!.aiPriceAssistant,
+        content: AppLocalizations.of(context)!.noApiKey,
+        confirmText: 'CONFIGURAR',
+        cancelText: AppLocalizations.of(context)!.cancel,
+      );
+      if (confirm && mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isAnalyzing = true;
+      _geminiAnalysis = null;
+    });
+
+    try {
+      final result = await GeminiService.analisarPreco(nome, preco);
+      if (mounted) {
+        setState(() {
+          _geminiAnalysis = result;
+          _isAnalyzing = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isAnalyzing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro na análise: $e')),
+        );
+      }
+    }
+  }
+
   /// Formata um preço existente no formato do formatter de banco.
   /// Ex: 12.34 → "12,34", 1500.50 → "1.500,50", 0.5 → "0,50"
   String _formatarPrecoInicial(double preco) {
@@ -233,6 +287,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
             Row(
               children: [
                 Expanded(
+                  flex: 2,
                   child: Semantics(
                     label: 'item_quantidade',
                     child: TextField(
@@ -249,6 +304,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
                 const SizedBox(width: 16),
 
                 Expanded(
+                  flex: 3,
                   child: Semantics(
                     label: 'item_preco',
                     child: TextField(
@@ -259,6 +315,20 @@ class _EditItemScreenState extends State<EditItemScreen> {
                         border: const OutlineInputBorder(),
                         prefixIcon: const Icon(Icons.attach_money),
                         prefixText: 'R\$ ',
+                        suffixIcon: _isAnalyzing
+                            ? const Padding(
+                                padding: EdgeInsets.all(12),
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              )
+                            : IconButton(
+                                icon: const Icon(Icons.auto_awesome, color: Colors.deepPurple),
+                                onPressed: _analisarPrecoComIA,
+                                tooltip: AppLocalizations.of(context)!.analyzePrice,
+                              ),
                       ),
                       keyboardType: TextInputType.number,
                       inputFormatters: [
@@ -371,6 +441,103 @@ class _EditItemScreenState extends State<EditItemScreen> {
                 );
               },
             ),
+            
+            // --- NOVO QUADRO DE IA GEMINI (ABAIXO DO CORREDOR) ---
+            if (_geminiAnalysis != null) ...[
+              const SizedBox(height: 16),
+              Builder(
+                builder: (context) {
+                  final parts = _geminiAnalysis!.split('|');
+                  final statusRaw = parts[0].replaceAll('`', '').trim().toLowerCase();
+                  final precoMedio = parts.length > 1 ? parts[1].trim() : '';
+                  final dica = parts.length > 2 ? parts[2].trim() : '';
+                  
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
+                  Color color = Colors.grey;
+                  IconData icon = Icons.info_outline;
+                  String label = parts[0].replaceAll('`', '').trim();
+
+                  // Mapeamento inteligente de cores adaptado para Dark Mode
+                  if (statusRaw.contains('barato') || statusRaw.contains('excelente') || statusRaw.contains('ótimo') || statusRaw.contains('bom')) {
+                    color = isDark ? Colors.green.shade400 : Colors.green.shade700;
+                    icon = Icons.sentiment_very_satisfied;
+                  } else if (statusRaw.contains('justo') || statusRaw.contains('médio') || statusRaw.contains('normal')) {
+                    color = isDark ? Colors.blue.shade400 : Colors.blue.shade700;
+                    icon = Icons.thumbs_up_down;
+                  } else if (statusRaw.contains('caro') || statusRaw.contains('alto') || statusRaw.contains('caríssimo')) {
+                    color = isDark ? Colors.red.shade400 : Colors.red.shade700;
+                    icon = Icons.warning_amber_rounded;
+                  }
+
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(top: 8, bottom: 16),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: color.withOpacity(0.4), width: 2),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(icon, color: color, size: 32),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                label.replaceAll('`', '').trim().toUpperCase(),
+                                style: TextStyle(
+                                  color: color,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 15,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                              if (precoMedio.isNotEmpty &&
+                                  precoMedio != '—') ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Faixa de mercado: '
+                                  '${precoMedio.replaceAll('`', '').trim()}',
+                                  style: TextStyle(
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white.withOpacity(0.9)
+                                        : color,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                  ),
+                                  softWrap: true,
+                                ),
+                              ],
+                              if (dica.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  dica.replaceAll('`', '').trim(),
+                                  style: TextStyle(
+                                    color: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white.withOpacity(0.7)
+                                        : Colors.grey.shade800,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  softWrap: true,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
             const SizedBox(height: 24),
 
             Container(
