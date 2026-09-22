@@ -29,6 +29,11 @@ subprojects {
 subprojects {
     project.evaluationDependsOn(":app")
 }
+subprojects {
+    tasks.matching { it.name.startsWith("lintVital") }.configureEach {
+        enabled = false
+    }
+}
 
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)

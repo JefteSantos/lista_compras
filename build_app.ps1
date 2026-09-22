@@ -8,6 +8,7 @@
 #   .\build_app.ps1 -Bump minor  → Incrementa minor       (1.1.1+35 → 1.2.0+36)
 #   .\build_app.ps1 -Bump major  → Incrementa major       (1.1.1+35 → 2.0.0+36)
 #   .\build_app.ps1 -Version "1.3.0"  → Define versão manualmente (build auto)
+#   .\build_app.ps1 -Notes "Texto"    → Define notas da versão para a Play Store
 #   .\build_app.ps1 -SkipClean   → Pula o flutter clean (mais rápido)
 #   .\build_app.ps1 -AabOnly     → Gera apenas AAB (sem APK)
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -16,6 +17,7 @@ param(
     [ValidateSet("patch", "minor", "major")]
     [string]$Bump = "",
     [string]$Version = "",
+    [string]$Notes = "",
     [switch]$SkipClean,
     [switch]$AabOnly
 )
@@ -28,6 +30,35 @@ if (-not (Test-Path $pubspec)) {
 }
 
 $content = Get-Content $pubspec -Raw
+
+# ─── Função para Obter Notas da Versão ──────────────────────────────────────
+function Obter-NotasVersao {
+    param([string]$customNotes)
+
+    if ($customNotes -ne "") {
+        return $customNotes.Trim()
+    }
+
+    $notesFile = "RELEASE_NOTES.txt"
+    if (Test-Path $notesFile) {
+        $fileContent = (Get-Content $notesFile -Raw).Trim()
+        if ($fileContent -ne "") {
+            return $fileContent
+        }
+    }
+
+    # Se não houver arquivo nem parâmetro, extrai do Git automaticamente
+    try {
+        $gitCommits = git log -n 5 --no-merges --pretty=format:"• %s" 2>$null
+        if ($gitCommits) {
+            return ($gitCommits -join "`n")
+        }
+    } catch {
+        # Git indisponível ou falhou
+    }
+
+    return "• Melhorias de desempenho e correções de estabilidade."
+}
 
 # ─── Extrair versão atual ───────────────────────────────────────────────────
 if ($content -notmatch "version:\s+(\d+)\.(\d+)\.(\d+)\+(\d+)") {
@@ -92,6 +123,11 @@ if (-not $SkipClean) {
     Write-Host "[1/3] Limpeza pulada (-SkipClean)" -ForegroundColor DarkGray
 }
 
+$apkPath = ""
+$apkSize = 0
+$aabPath = ""
+$aabSize = 0
+
 # ─── Build APK ──────────────────────────────────────────────────────────────
 if (-not $AabOnly) {
     Write-Host "[2/3] Gerando APK Release..." -ForegroundColor Yellow
@@ -126,13 +162,38 @@ if ($?) {
     exit 1
 }
 
-# ─── Resumo ─────────────────────────────────────────────────────────────────
+# ─── Gerar e Salvar Notas da Versão ─────────────────────────────────────────
+$releaseNotes = Obter-NotasVersao -customNotes $Notes
+
+if (-not (Test-Path "build")) {
+    New-Item -ItemType Directory -Path "build" | Out-Null
+}
+
+$notesOutput = @"
+Novidades da versão $newVersionName:
+
+$releaseNotes
+"@
+$notesOutput | Set-Content "build\release_notes.txt" -Encoding UTF8
+
+# ─── Resumo Final ───────────────────────────────────────────────────────────
 Write-Host ""
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor DarkCyan
 Write-Host "  Build concluido com sucesso!" -ForegroundColor Green
 Write-Host "  Versao: $newVersion" -ForegroundColor Cyan
 Write-Host "  versionName: $newVersionName (exibida ao usuario)" -ForegroundColor DarkGray
 Write-Host "  versionCode: $build (interna da Play Store)" -ForegroundColor DarkGray
-Write-Host "  APK gerado ($apkSize MB): $apkPath" -ForegroundColor Green
+if (-not $AabOnly -and (Test-Path $apkPath)) {
+    Write-Host "  APK: $apkPath ($apkSize MB)" -ForegroundColor Green
+}
+if (Test-Path $aabPath) {
+    Write-Host "  AAB: $aabPath ($aabSize MB)" -ForegroundColor Green
+}
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor DarkCyan
+Write-Host ""
+Write-Host "📝 NOTAS DA VERSÃO (Play Store):" -ForegroundColor Yellow
+Write-Host "───────────────────────────────────────────────" -ForegroundColor DarkGray
+Write-Host $notesOutput -ForegroundColor White
+Write-Host "───────────────────────────────────────────────" -ForegroundColor DarkGray
+Write-Host "Arquivo salvo em: build\release_notes.txt" -ForegroundColor DarkGray
 Write-Host ""

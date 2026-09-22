@@ -218,15 +218,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _restaurarBackupAntigo() async {
     setState(() => _isLoading = true);
     try {
-      final success = await DriveBackupService.downloadPreviousRevisionBackup(
-        substituir: true,
-      );
+      final result = await DriveBackupService.downloadPreviousRevisionBackup();
 
       if (!mounted) return;
 
-      if (success) {
-        // Recarrega o provedor de listas após a restauração
-        Provider.of<ListasProvider>(context, listen: false).carregarListas();
+      if (result != null && result.listas.isNotEmpty) {
+        await Provider.of<ListasProvider>(context, listen: false)
+            .importarListas(result.listas, substituir: true);
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Backup anterior restaurado com sucesso!'),
@@ -242,6 +241,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       }
     } catch (e) {
+      if (!mounted) return;
       if (e.toString().contains('401')) {
         AuthService.signOut();
         ScaffoldMessenger.of(context).showSnackBar(
