@@ -8,7 +8,7 @@ part of 'categoria_item.dart';
 
 class CategoriaItemAdapter extends TypeAdapter<CategoriaItem> {
   @override
-  final int typeId = 4;
+  final typeId = 4;
 
   @override
   CategoriaItem read(BinaryReader reader) {
@@ -19,7 +19,7 @@ class CategoriaItemAdapter extends TypeAdapter<CategoriaItem> {
     return CategoriaItem(
       id: fields[0] as String,
       nome: fields[1] as String,
-      ordem: fields[2] as int?,
+      ordem: (fields[2] as num?)?.toInt(),
     );
   }
 

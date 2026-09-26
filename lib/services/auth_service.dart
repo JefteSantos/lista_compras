@@ -76,18 +76,34 @@ class AuthService {
   }
 
   /// Abre a tela de login do Google.
-  /// Retorna null se o usuário cancelar (mesmo comportamento de antes).
+  /// Retorna null se o usuário cancelar.
   static Future<GoogleSignInAccount?> signIn() async {
     try {
-      final account = await _googleSignIn.authenticate(scopeHint: scopes);
+      // Garante que qualquer sessão obsoleta/cache no Play Services seja limpa antes do login
+      try {
+        await _googleSignIn.signOut();
+      } catch (_) {}
+
+      final account = await _googleSignIn.authenticate();
       return account;
     } on GoogleSignInException catch (e) {
-      if (e.code == GoogleSignInExceptionCode.canceled) {
+      if (e.code == GoogleSignInExceptionCode.canceled ||
+          e.toString().contains('16') ||
+          e.toString().contains('reauth')) {
+        try {
+          await _googleSignIn.signOut();
+        } catch (_) {}
         return null;
       }
       debugPrint('ERRO NO GOOGLE SIGN-IN: $e');
       rethrow;
     } catch (e) {
+      if (e.toString().contains('16') || e.toString().contains('reauth')) {
+        try {
+          await _googleSignIn.signOut();
+        } catch (_) {}
+        return null;
+      }
       debugPrint('ERRO NO GOOGLE SIGN-IN: $e');
       rethrow;
     }

@@ -8,7 +8,7 @@ part of 'lista_compras.dart';
 
 class ListaComprasAdapter extends TypeAdapter<ListaCompras> {
   @override
-  final int typeId = 1;
+  final typeId = 1;
 
   @override
   ListaCompras read(BinaryReader reader) {
@@ -23,7 +23,7 @@ class ListaComprasAdapter extends TypeAdapter<ListaCompras> {
       itens: (fields[3] as List?)?.cast<Item>(),
       dataCriacao: fields[4] as DateTime,
       dataFinalizacao: fields[5] as DateTime?,
-      finalizada: fields[6] as bool,
+      finalizada: fields[6] == null ? false : fields[6] as bool,
       cor: fields[7] as String?,
     );
   }

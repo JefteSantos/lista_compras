@@ -69,11 +69,21 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
         getByName("release") {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             val releaseSigningConfig = signingConfigs.findByName("release")
             if (releaseSigningConfig != null) {
                 signingConfig = releaseSigningConfig
             }
         }
+    }
+
+    dependencies {
+        implementation("androidx.activity:activity-ktx:1.9.3")
     }
 }
 

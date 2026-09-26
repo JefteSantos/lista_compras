@@ -8,7 +8,7 @@ part of 'preco_historico.dart';
 
 class PrecoEntradaAdapter extends TypeAdapter<PrecoEntrada> {
   @override
-  final int typeId = 3;
+  final typeId = 3;
 
   @override
   PrecoEntrada read(BinaryReader reader) {
@@ -17,7 +17,7 @@ class PrecoEntradaAdapter extends TypeAdapter<PrecoEntrada> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return PrecoEntrada(
-      preco: fields[0] as double,
+      preco: (fields[0] as num).toDouble(),
       data: fields[1] as DateTime,
     );
   }
@@ -45,7 +45,7 @@ class PrecoEntradaAdapter extends TypeAdapter<PrecoEntrada> {
 
 class PrecoHistoricoAdapter extends TypeAdapter<PrecoHistorico> {
   @override
-  final int typeId = 2;
+  final typeId = 2;
 
   @override
   PrecoHistorico read(BinaryReader reader) {

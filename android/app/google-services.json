@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "958891505864-4nqt1r4sstffo5bl6eafpafo6hphechs.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.naoesquece.culpadoturing",
+            "certificate_hash": "2b2c584045ccfd3a989da94ac6f818ee8b7db00a"
+          }
+        },
+        {
           "client_id": "958891505864-7biantrrdltmhja8ibb1v0bebhqili7v.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

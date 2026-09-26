@@ -1,14 +1,16 @@
-# ═══════════════════════════════════════════════════════════════════════════════
+﻿# ═══════════════════════════════════════════════════════════════════════════════
 # Build Script — Não Esquece!
 # Atualiza a versão, limpa cache e gera APK + AAB (App Bundle para Play Store)
 #
 # USO:
-#   .\build_app.ps1              → Incrementa build number (1.1.1+35 → 1.1.1+36)
-#   .\build_app.ps1 -Bump patch  → Incrementa patch       (1.1.1+35 → 1.1.2+36)
-#   .\build_app.ps1 -Bump minor  → Incrementa minor       (1.1.1+35 → 1.2.0+36)
-#   .\build_app.ps1 -Bump major  → Incrementa major       (1.1.1+35 → 2.0.0+36)
-#   .\build_app.ps1 -Version "1.3.0"  → Define versão manualmente (build auto)
-#   .\build_app.ps1 -Notes "Texto"    → Define notas da versão para a Play Store
+#   .\build_app.ps1              → Incrementa versão/build (ex: 1.4.52+52 → 1.4.53+53)
+#   .\build_app.ps1 -Bump patch  → Incrementa patch       (ex: 1.4.52+52 → 1.4.53+53)
+#   .\build_app.ps1 -Bump minor  → Incrementa minor       (ex: 1.4.52+52 → 1.5.53+53)
+#   .\build_app.ps1 -Bump major  → Incrementa major       (ex: 1.4.52+52 → 2.0.53+53)
+#   .\build_app.ps1 -Version "1.5.0"     → Define versão manualmente (build auto)
+#   .\build_app.ps1 -NotesText "Texto"   → Define notas da versão manualmente (usado no build)
+#   .\build_app.ps1 -Notes               → PREVIEW: só mostra as últimas alterações (git log), sem buildar
+#   .\build_app.ps1 -Notes -NotesText "Texto" → PREVIEW do texto manual, sem buildar
 #   .\build_app.ps1 -SkipClean   → Pula o flutter clean (mais rápido)
 #   .\build_app.ps1 -AabOnly     → Gera apenas AAB (sem APK)
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -17,19 +19,20 @@ param(
     [ValidateSet("patch", "minor", "major")]
     [string]$Bump = "",
     [string]$Version = "",
-    [string]$Notes = "",
+    [switch]$Notes,
+    [string]$NotesText = "",
     [switch]$SkipClean,
     [switch]$AabOnly
 )
 
-$pubspec = "pubspec.yaml"
+# ─── Remove conflito de variáveis legadas do Android no Windows ──────────────
+Remove-Item Env:\ANDROID_PREFS_ROOT -ErrorAction SilentlyContinue
 
-if (-not (Test-Path $pubspec)) {
-    Write-Host "ERRO: $pubspec nao encontrado. Execute este script na raiz do projeto." -ForegroundColor Red
-    exit 1
-}
-
-$content = Get-Content $pubspec -Raw
+# ─── Força UTF-8 no console e na captura de saída de comandos externos (git) ─
+chcp 65001 > $null
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::InputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
 # ─── Função para Obter Notas da Versão ──────────────────────────────────────
 function Obter-NotasVersao {
@@ -41,7 +44,7 @@ function Obter-NotasVersao {
 
     $notesFile = "RELEASE_NOTES.txt"
     if (Test-Path $notesFile) {
-        $fileContent = (Get-Content $notesFile -Raw).Trim()
+        $fileContent = (Get-Content $notesFile -Raw -Encoding UTF8).Trim()
         if ($fileContent -ne "") {
             return $fileContent
         }
@@ -59,6 +62,27 @@ function Obter-NotasVersao {
 
     return "• Melhorias de desempenho e correções de estabilidade."
 }
+
+# ─── Modo PREVIEW: só mostra as notas e sai (não builda, não mexe em versão) ─
+if ($Notes) {
+    $previewNotes = Obter-NotasVersao -customNotes $NotesText
+    Write-Host ""
+    Write-Host "[*] PREVIEW - ULTIMAS ALTERACOES:" -ForegroundColor Yellow
+    Write-Host "───────────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host $previewNotes -ForegroundColor White
+    Write-Host "───────────────────────────────────────────────" -ForegroundColor DarkGray
+    Write-Host ""
+    exit 0
+}
+
+$pubspec = "pubspec.yaml"
+
+if (-not (Test-Path $pubspec)) {
+    Write-Host "ERRO: $pubspec nao encontrado. Execute este script na raiz do projeto." -ForegroundColor Red
+    exit 1
+}
+
+$content = Get-Content $pubspec -Raw
 
 # ─── Extrair versão atual ───────────────────────────────────────────────────
 if ($content -notmatch "version:\s+(\d+)\.(\d+)\.(\d+)\+(\d+)") {
@@ -92,16 +116,20 @@ if ($Version -ne "") {
 elseif ($Bump -eq "major") {
     $major = $major + 1
     $minor = 0
-    $patch = 0
+    $patch = $build
 }
 elseif ($Bump -eq "minor") {
     $minor = $minor + 1
-    $patch = 0
+    $patch = $build
 }
 elseif ($Bump -eq "patch") {
     $patch = $patch + 1
 }
-# Se nenhum -Bump ou -Version: só incrementa build number
+else {
+    # Por padrão, o número de patch acompanha o build para que a versão visível (versionName)
+    # se atualize automaticamente a cada build (ex: 1.4.52 -> 1.4.53)
+    $patch = $build
+}
 
 $newVersionName = "$major.$minor.$patch"
 $newVersion = "$newVersionName+$build"
@@ -163,14 +191,14 @@ if ($?) {
 }
 
 # ─── Gerar e Salvar Notas da Versão ─────────────────────────────────────────
-$releaseNotes = Obter-NotasVersao -customNotes $Notes
+$releaseNotes = Obter-NotasVersao -customNotes $NotesText
 
 if (-not (Test-Path "build")) {
     New-Item -ItemType Directory -Path "build" | Out-Null
 }
 
 $notesOutput = @"
-Novidades da versão $newVersionName:
+Novidades da versão ${newVersionName}:
 
 $releaseNotes
 "@
@@ -191,7 +219,7 @@ if (Test-Path $aabPath) {
 }
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor DarkCyan
 Write-Host ""
-Write-Host "📝 NOTAS DA VERSÃO (Play Store):" -ForegroundColor Yellow
+Write-Host "[*] NOTAS DA VERSÃO (Play Store):" -ForegroundColor Yellow
 Write-Host "───────────────────────────────────────────────" -ForegroundColor DarkGray
 Write-Host $notesOutput -ForegroundColor White
 Write-Host "───────────────────────────────────────────────" -ForegroundColor DarkGray

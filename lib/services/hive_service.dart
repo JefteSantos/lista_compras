@@ -1,8 +1,9 @@
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import '../models/item.dart';
 import '../models/lista_compras.dart';
 import '../models/preco_historico.dart';
 import '../models/categoria_item.dart';
+import '../hive_registrar.g.dart';
 
 class HiveService {
   static const _listaComprasBoxName = 'listas_compras';
@@ -34,11 +35,7 @@ class HiveService {
     }
 
     await Hive.initFlutter();
-    if (!Hive.isAdapterRegistered(0)) Hive.registerAdapter(ItemAdapter());
-    if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(ListaComprasAdapter());
-    if (!Hive.isAdapterRegistered(2)) Hive.registerAdapter(PrecoHistoricoAdapter());
-    if (!Hive.isAdapterRegistered(3)) Hive.registerAdapter(PrecoEntradaAdapter());
-    if (!Hive.isAdapterRegistered(4)) Hive.registerAdapter(CategoriaItemAdapter());
+    Hive.registerAdapters();
     
     _listaComprasBox = await Hive.openBox<ListaCompras>(_listaComprasBoxName);
     _itemBox = await Hive.openBox<Item>(_itemBoxName);
