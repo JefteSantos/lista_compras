@@ -4,6 +4,7 @@
 #
 # USO:
 #   .\build_app.ps1              → Incrementa versão/build (ex: 1.4.52+52 → 1.4.53+53)
+#   .\build_app.ps1 -KeepVersion → Mantém a versão visível atual e incrementa apenas o build (ex: 1.4.59+59 → 1.4.59+60)
 #   .\build_app.ps1 -Bump patch  → Incrementa patch       (ex: 1.4.52+52 → 1.4.53+53)
 #   .\build_app.ps1 -Bump minor  → Incrementa minor       (ex: 1.4.52+52 → 1.5.53+53)
 #   .\build_app.ps1 -Bump major  → Incrementa major       (ex: 1.4.52+52 → 2.0.53+53)
@@ -22,7 +23,8 @@ param(
     [switch]$Notes,
     [string]$NotesText = "",
     [switch]$SkipClean,
-    [switch]$AabOnly
+    [switch]$AabOnly,
+    [switch]$KeepVersion
 )
 
 # ─── Remove conflito de variáveis legadas do Android no Windows ──────────────
@@ -100,7 +102,7 @@ Write-Host ""
 Write-Host "  Versao atual: $oldVersion" -ForegroundColor DarkGray
 
 # ─── Calcular nova versão ───────────────────────────────────────────────────
-# Build number SEMPRE incrementa (é o versionCode do Android — nunca deve repetir)
+# Build number SEMPRE incrementa (é o versionCode do Android — obrigatório para subir nova versão na Play Store)
 $build = $build + 1
 
 if ($Version -ne "") {
@@ -112,6 +114,10 @@ if ($Version -ne "") {
     $major = [int]$Matches[1]
     $minor = [int]$Matches[2]
     $patch = [int]$Matches[3]
+}
+elseif ($KeepVersion) {
+    # Mantém o versionName atual (major.minor.patch), apenas incrementa o versionCode (build)
+    # Mantém $major, $minor, $patch inalterados
 }
 elseif ($Bump -eq "major") {
     $major = $major + 1
@@ -214,7 +220,7 @@ Write-Host "  versionCode: $build (interna da Play Store)" -ForegroundColor Dark
 if (-not $AabOnly -and (Test-Path $apkPath)) {
     Write-Host "  APK: $apkPath ($apkSize MB)" -ForegroundColor Green
 }
-if (Test-Path $aabPath) {
+if ((Test-Path $aabPath)) {
     Write-Host "  AAB: $aabPath ($aabSize MB)" -ForegroundColor Green
 }
 Write-Host "═══════════════════════════════════════════════" -ForegroundColor DarkCyan
