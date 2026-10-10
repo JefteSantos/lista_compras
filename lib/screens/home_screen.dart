@@ -258,7 +258,9 @@ class _HomeScreenState extends State<HomeScreen>
                   hintText: AppLocalizations.of(context)!.importCodeHint,
                   hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 12),
                   filled: true,
-                  fillColor: Colors.grey.shade50,
+                  fillColor: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey.shade900
+                      : Colors.grey.shade50,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: Colors.grey.shade300),

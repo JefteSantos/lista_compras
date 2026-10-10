@@ -474,9 +474,9 @@ class _EditItemScreenState extends State<EditItemScreen> {
                     padding: const EdgeInsets.all(12),
                     margin: const EdgeInsets.only(top: 8, bottom: 16),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.12),
+                      color: color.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: color.withOpacity(0.4), width: 2),
+                      border: Border.all(color: color.withValues(alpha: 0.4), width: 2),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -506,7 +506,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
                                   style: TextStyle(
                                     color: Theme.of(context).brightness ==
                                             Brightness.dark
-                                        ? Colors.white.withOpacity(0.9)
+                                        ? Colors.white.withValues(alpha: 0.9)
                                         : color,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 12,
@@ -521,7 +521,7 @@ class _EditItemScreenState extends State<EditItemScreen> {
                                   style: TextStyle(
                                     color: Theme.of(context).brightness ==
                                             Brightness.dark
-                                        ? Colors.white.withOpacity(0.7)
+                                        ? Colors.white.withValues(alpha: 0.7)
                                         : Colors.grey.shade800,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
@@ -540,125 +540,151 @@ class _EditItemScreenState extends State<EditItemScreen> {
             ],
             const SizedBox(height: 24),
 
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey.shade300),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Preview:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+            Builder(
+              builder: (context) {
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text(
-                          _nomeController.text.isEmpty
-                              ? 'Nome do item'
-                              : _nomeController.text,
-                          style: const TextStyle(fontSize: 16),
+                      Text(
+                        'Preview:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white70 : Colors.black87,
                         ),
                       ),
-                      if (_categoriaSelecionada != null) ...
-                        [_buildCategoriaTag(_categoriaSelecionada!)],
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Text(
-                        'Qtd: ${_quantidadeController.text.isEmpty ? '1' : _quantidadeController.text}',
-                      ),
-                      const SizedBox(width: 16),
-                      Text(
-                        _precoAtual == null
-                            ? 'Preço não informado'
-                            : AppUtils.formatMoney(_precoAtual!),
-                      ),
-                    ],
-                  ),
-                  // --- SEÇÃO DE HISTÓRICO E TENDÊNCIA ---
-                  if (_nomeController.text.isNotEmpty) ...[
-                    Consumer<ListasProvider>(
-                      builder: (context, provider, child) {
-                        final ultimoPreco = provider.obterUltimoPreco(_nomeController.text);
-                        if (ultimoPreco == null) return const SizedBox.shrink();
-
-                        final precoAtual = _precoAtual;
-                        final diferenca = precoAtual != null ? (precoAtual - ultimoPreco) : 0.0;
-                        final ehMaisCaro = precoAtual != null && diferenca > 0.01;
-                        final ehMaisBarato = precoAtual != null && diferenca < -0.01;
-
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Row(
-                            children: [
-                              Icon(
-                                precoAtual == null 
-                                  ? Icons.history 
-                                  : (ehMaisCaro ? Icons.trending_up : (ehMaisBarato ? Icons.trending_down : Icons.trending_flat)),
-                                size: 16,
-                                color: precoAtual == null 
-                                  ? Colors.grey 
-                                  : (ehMaisCaro ? Colors.red : (ehMaisBarato ? Colors.green : Colors.grey)),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _nomeController.text.isEmpty
+                                  ? 'Nome do item'
+                                  : _nomeController.text,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isDark ? Colors.white : Colors.black87,
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Último pago: ${AppUtils.formatMoney(ultimoPreco)}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: precoAtual == null 
-                                    ? Colors.grey.shade700 
-                                    : (ehMaisCaro ? Colors.red : (ehMaisBarato ? Colors.green : Colors.grey.shade700)),
-                                ),
-                              ),
-                              if (precoAtual != null && (ehMaisCaro || ehMaisBarato))
-                                Text(
-                                  ' (${ehMaisCaro ? '+' : ''}${AppUtils.formatMoney(diferenca.abs())})',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: ehMaisCaro ? Colors.red : Colors.green,
-                                  ),
-                                ),
-                            ],
+                            ),
                           ),
-                        );
-                      },
-                    ),
-                  ],
-                  // --------------------------------------
-                  // Campo Total: só aparece quando preço é válido
-                  if (_precoAtual != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Total: ${AppUtils.formatMoney(_precoAtual! * (double.tryParse(_quantidadeController.text.replaceAll(',', '.')) ?? 1.0))}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple,
+                          if (_categoriaSelecionada != null) ...[
+                            _buildCategoriaTag(_categoriaSelecionada!),
+                          ],
+                        ],
                       ),
-                    ),
-                  ],
-                  if (_observacoesController.text.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Obs: ${_observacoesController.text}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                        fontStyle: FontStyle.italic,
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Text(
+                            'Qtd: ${_quantidadeController.text.isEmpty ? '1' : _quantidadeController.text}',
+                            style: TextStyle(
+                              color: isDark ? Colors.grey.shade300 : Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Text(
+                            _precoAtual == null
+                                ? 'Preço não informado'
+                                : AppUtils.formatMoney(_precoAtual!),
+                            style: TextStyle(
+                              color: isDark ? Colors.grey.shade300 : Colors.black87,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ],
-              ),
+                      // --- SEÇÃO DE HISTÓRICO E TENDÊNCIA ---
+                      if (_nomeController.text.isNotEmpty) ...[
+                        Consumer<ListasProvider>(
+                          builder: (context, provider, child) {
+                            final ultimoPreco = provider.obterUltimoPreco(_nomeController.text);
+                            if (ultimoPreco == null) return const SizedBox.shrink();
+
+                            final precoAtual = _precoAtual;
+                            final diferenca = precoAtual != null ? (precoAtual - ultimoPreco) : 0.0;
+                            final ehMaisCaro = precoAtual != null && diferenca > 0.01;
+                            final ehMaisBarato = precoAtual != null && diferenca < -0.01;
+
+                            final colorTendencia = precoAtual == null
+                                ? (isDark ? Colors.grey.shade400 : Colors.grey)
+                                : (ehMaisCaro
+                                    ? (isDark ? Colors.red.shade300 : Colors.red)
+                                    : (ehMaisBarato
+                                        ? (isDark ? Colors.greenAccent : Colors.green)
+                                        : (isDark ? Colors.grey.shade400 : Colors.grey.shade700)));
+
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    precoAtual == null
+                                      ? Icons.history
+                                      : (ehMaisCaro ? Icons.trending_up : (ehMaisBarato ? Icons.trending_down : Icons.trending_flat)),
+                                    size: 16,
+                                    color: colorTendencia,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Último pago: ${AppUtils.formatMoney(ultimoPreco)}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: colorTendencia,
+                                    ),
+                                  ),
+                                  if (precoAtual != null && (ehMaisCaro || ehMaisBarato))
+                                    Text(
+                                      ' (${ehMaisCaro ? '+' : ''}${AppUtils.formatMoney(diferenca.abs())})',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: ehMaisCaro
+                                            ? (isDark ? Colors.red.shade300 : Colors.red)
+                                            : (isDark ? Colors.greenAccent : Colors.green),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                      // --------------------------------------
+                      // Campo Total: só aparece quando preço é válido
+                      if (_precoAtual != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Total: ${AppUtils.formatMoney(_precoAtual! * (double.tryParse(_quantidadeController.text.replaceAll(',', '.')) ?? 1.0))}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.purpleAccent.shade100 : Colors.deepPurple,
+                          ),
+                        ),
+                      ],
+                      if (_observacoesController.text.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Obs: ${_observacoesController.text}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              },
             ),
 
                 ],

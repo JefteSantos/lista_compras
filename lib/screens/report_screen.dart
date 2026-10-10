@@ -36,8 +36,6 @@ class _ReportScreenState extends State<ReportScreen> {
   Widget build(BuildContext context) {
     final allListas = Provider.of<ListasProvider>(context).listas;
 
-    // Bug 6 fix: usa variável local para cálculos no build;
-    // _filteredList é atualizado apenas para uso no export (fora do build)
     final filteredList = allListas.where((lista) {
       if (_selectedDateRange != null) {
         if (lista.dataCriacao.isBefore(_selectedDateRange!.start) ||
@@ -64,7 +62,7 @@ class _ReportScreenState extends State<ReportScreen> {
     }).toList();
 
     filteredList.sort((a, b) => b.dataCriacao.compareTo(a.dataCriacao));
-    _filteredList = filteredList; // mantido apenas para o botão de export
+    _filteredList = filteredList;
 
     double totalGeralComprado = 0;
     double totalGeralAberto = 0;
@@ -113,6 +111,7 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildFilters() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final dateFormat = DateFormat('dd/MM/yyyy');
     final dateText = _selectedDateRange == null
         ? AppLocalizations.of(context)!.allDates
@@ -134,7 +133,7 @@ class _ReportScreenState extends State<ReportScreen> {
                       prefixIcon: const Icon(Icons.search),
                       isDense: true,
                       border: const OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
+                      contentPadding: const EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 8,
                       ),
@@ -171,15 +170,17 @@ class _ReportScreenState extends State<ReportScreen> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade400),
+                  border: Border.all(
+                    color: isDark ? Colors.grey.shade700 : Colors.grey.shade400,
+                  ),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.calendar_today,
                       size: 16,
-                      color: Colors.deepPurple,
+                      color: isDark ? Colors.purpleAccent.shade100 : Colors.deepPurple,
                     ),
                     const SizedBox(width: 8),
                     Expanded(child: Text(dateText)),
@@ -205,6 +206,7 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildReportCard(ListaCompras lista) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final valorAberto = lista.precoTotal - lista.precoComprado;
 
     return Card(
@@ -233,8 +235,11 @@ class _ReportScreenState extends State<ReportScreen> {
                   ),
                 ),
                 Text(
-                  '${AppLocalizations.of(context)!.totalSpentLabel}: ${AppUtils.formatMoney(lista.precoComprado)}', // Simplificado para caber
-                  style: const TextStyle(fontSize: 11, color: Colors.green),
+                  '${AppLocalizations.of(context)!.totalSpentLabel}: ${AppUtils.formatMoney(lista.precoComprado)}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isDark ? Colors.greenAccent : Colors.green.shade700,
+                  ),
                 ),
               ],
             ),
@@ -242,7 +247,7 @@ class _ReportScreenState extends State<ReportScreen> {
 
           if (_showItems && lista.itens.isNotEmpty)
             Container(
-              color: Colors.grey.shade50,
+              color: isDark ? Colors.grey.shade900 : Colors.grey.shade50,
               padding: const EdgeInsets.all(8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -254,11 +259,15 @@ class _ReportScreenState extends State<ReportScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
+                        color: isDark ? Colors.white70 : Colors.black87,
                       ),
                     ),
                   ),
                   Container(
-                    decoration: const BoxDecoration(color: Colors.deepPurple),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.deepPurple.shade700 : Colors.deepPurple,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                     padding: const EdgeInsets.all(4),
                     child: Row(
                       children: [
@@ -305,7 +314,7 @@ class _ReportScreenState extends State<ReportScreen> {
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
-                            color: Colors.grey.shade300,
+                            color: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
                             width: 0.5,
                           ),
                         ),
@@ -321,7 +330,10 @@ class _ReportScreenState extends State<ReportScreen> {
                               children: [
                                 Text(
                                   item.nome,
-                                  style: const TextStyle(fontSize: 12),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: isDark ? Colors.white : Colors.black87,
+                                  ),
                                 ),
                                 if (item.observacoes != null &&
                                     item.observacoes!.isNotEmpty)
@@ -329,7 +341,7 @@ class _ReportScreenState extends State<ReportScreen> {
                                     item.observacoes!,
                                     style: TextStyle(
                                       fontSize: 10,
-                                      color: Colors.grey.shade600,
+                                      color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
                                       fontStyle: FontStyle.italic,
                                     ),
                                   ),
@@ -340,7 +352,10 @@ class _ReportScreenState extends State<ReportScreen> {
                             width: 40,
                             child: Text(
                               AppUtils.formatQuantity(item.quantidade),
-                              style: const TextStyle(fontSize: 12),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                           ),
@@ -350,7 +365,10 @@ class _ReportScreenState extends State<ReportScreen> {
                               item.preco != null
                                   ? AppUtils.formatMoney(item.preco!)
                                   : '-',
-                              style: const TextStyle(fontSize: 12),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
                               textAlign: TextAlign.right,
                             ),
                           ),
@@ -378,24 +396,29 @@ class _ReportScreenState extends State<ReportScreen> {
   }
 
   Widget _buildMiniStat(String label, double value, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final displayColor = isDark
+        ? (color == Colors.green ? Colors.greenAccent : Colors.orangeAccent)
+        : color;
+
     return Row(
       children: [
         Container(
           width: 8,
           height: 8,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          decoration: BoxDecoration(color: displayColor, shape: BoxShape.circle),
         ),
         const SizedBox(width: 4),
         Text(
           '$label: ',
-          style: const TextStyle(fontSize: 11, color: Colors.grey),
+          style: TextStyle(fontSize: 11, color: isDark ? Colors.grey.shade400 : Colors.grey),
         ),
         Text(
           AppUtils.formatMoney(value),
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
-            color: color,
+            color: displayColor,
           ),
         ),
       ],
@@ -407,10 +430,10 @@ class _ReportScreenState extends State<ReportScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? Colors.grey.shade900 : Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
             blurRadius: 4,
             offset: const Offset(0, -2),
           ),
@@ -424,14 +447,17 @@ class _ReportScreenState extends State<ReportScreen> {
               children: [
                 Text(
                   AppLocalizations.of(context)!.grandTotal,
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
                 ),
                 Text(
                   AppUtils.formatMoney(total),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
-                    color: Colors.deepPurple,
+                    color: isDark ? Colors.purpleAccent.shade100 : Colors.deepPurple,
                   ),
                 ),
               ],
@@ -443,20 +469,26 @@ class _ReportScreenState extends State<ReportScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(4),
+                      color: isDark ? Colors.green.shade900.withValues(alpha: 0.35) : Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: isDark ? Colors.green.shade700 : Colors.green.shade200,
+                      ),
                     ),
                     child: Column(
                       children: [
                         Text(
                           AppLocalizations.of(context)!.bought,
-                          style: TextStyle(fontSize: 12, color: Colors.green),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? Colors.greenAccent : Colors.green.shade800,
+                          ),
                         ),
                         Text(
                           AppUtils.formatMoney(comprado),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Colors.green,
+                            color: isDark ? Colors.greenAccent : Colors.green.shade900,
                           ),
                         ),
                       ],
@@ -468,20 +500,26 @@ class _ReportScreenState extends State<ReportScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.orange.shade50,
-                      borderRadius: BorderRadius.circular(4),
+                      color: isDark ? Colors.orange.shade900.withValues(alpha: 0.35) : Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: isDark ? Colors.orange.shade700 : Colors.orange.shade200,
+                      ),
                     ),
                     child: Column(
                       children: [
                         Text(
                           AppLocalizations.of(context)!.notBought,
-                          style: TextStyle(fontSize: 12, color: Colors.orange),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? Colors.orangeAccent : Colors.orange.shade800,
+                          ),
                         ),
                         Text(
                           AppUtils.formatMoney(aberto),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Colors.orange,
+                            color: isDark ? Colors.orangeAccent : Colors.orange.shade900,
                           ),
                         ),
                       ],
@@ -510,11 +548,21 @@ class _ReportScreenState extends State<ReportScreen> {
       lastDate: DateTime(2030),
       initialDateRange: initialDateRange,
       builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         return Theme(
-          data: ThemeData.light().copyWith(
-            primaryColor: Colors.deepPurple,
-            colorScheme: const ColorScheme.light(primary: Colors.deepPurple),
-          ),
+          data: isDark
+              ? ThemeData.dark().copyWith(
+                  colorScheme: const ColorScheme.dark(
+                    primary: Colors.deepPurpleAccent,
+                    onPrimary: Colors.white,
+                    surface: Color(0xFF1E1E1E),
+                    onSurface: Colors.white,
+                  ),
+                )
+              : ThemeData.light().copyWith(
+                  primaryColor: Colors.deepPurple,
+                  colorScheme: const ColorScheme.light(primary: Colors.deepPurple),
+                ),
           child: child!,
         );
       },
@@ -561,7 +609,7 @@ class _ReportScreenState extends State<ReportScreen> {
             children: [
               Text(
                 AppLocalizations.of(context)!.exportReport,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               ListTile(

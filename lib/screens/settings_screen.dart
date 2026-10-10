@@ -537,26 +537,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildStatusBanner() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = _statusIsError ? Colors.red : Colors.deepPurple;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.shade50,
+        color: isDark ? color.shade900.withValues(alpha: 0.35) : color.shade50,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.shade200),
+        border: Border.all(color: isDark ? color.shade700 : color.shade200),
       ),
       child: Row(
         children: [
           Icon(
             _statusIsError ? Icons.error_outline : Icons.check_circle_outline,
-            color: color.shade400,
+            color: isDark ? (_statusIsError ? Colors.redAccent : Colors.purpleAccent) : color.shade400,
             size: 20,
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               _statusMsg!,
-              style: TextStyle(color: color.shade700),
+              style: TextStyle(
+                color: isDark ? (_statusIsError ? Colors.red.shade200 : Colors.purple.shade200) : color.shade700,
+              ),
             ),
           ),
         ],
@@ -565,18 +568,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildInfoCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: 1,
-      color: Colors.blue.shade50,
+      color: isDark ? Colors.blue.shade900.withValues(alpha: 0.3) : Colors.blue.shade50,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Como funciona?',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+                color: isDark ? Colors.blue.shade200 : Colors.blue.shade900,
+              ),
             ),
             const SizedBox(height: 8),
             _infoItem('☁️', 'Seus dados ficam no seu próprio Google Drive (pasta privada)'),
@@ -590,6 +598,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _infoItem(String emoji, String text) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Row(
@@ -600,7 +609,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontSize: 12, color: Colors.blue.shade800),
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.blue.shade200 : Colors.blue.shade800,
+              ),
             ),
           ),
         ],
@@ -740,6 +752,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildGeminiCard() {
     final hasKey = _geminiKeyController.text.isNotEmpty;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -750,21 +764,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Text(
               AppLocalizations.of(context)!.geminiApiKeyInfo,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+              ),
             ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.deepPurple.shade50,
+                color: isDark ? Colors.deepPurple.shade900.withValues(alpha: 0.35) : Colors.deepPurple.shade50,
                 borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: isDark ? Colors.deepPurple.shade700 : Colors.deepPurple.shade100,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     AppLocalizations.of(context)!.howToGetApiKey,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.deepPurple),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: isDark ? Colors.purpleAccent.shade100 : Colors.deepPurple,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   _tutorialItem(AppLocalizations.of(context)!.geminiStep1),
@@ -804,8 +828,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: OutlinedButton(
                 onPressed: _isLoading ? null : _validarESalvarGeminiKey,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.deepPurple,
-                  side: const BorderSide(color: Colors.deepPurple),
+                  foregroundColor: isDark ? Colors.purpleAccent.shade100 : Colors.deepPurple,
+                  side: BorderSide(
+                    color: isDark ? Colors.purpleAccent.shade100 : Colors.deepPurple,
+                  ),
                 ),
                 child: Text(AppLocalizations.of(context)!.validateKey),
               ),

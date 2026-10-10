@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'package:lista_compras/models/item.dart';
 import 'package:lista_compras/models/lista_compras.dart';
 import 'package:lista_compras/models/listas_provider.dart';

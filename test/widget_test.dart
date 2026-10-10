@@ -8,7 +8,7 @@ import 'package:lista_compras/models/item.dart';
 import 'package:lista_compras/models/preco_historico.dart';
 import 'package:lista_compras/screens/home_screen.dart';
 import 'package:lista_compras/services/hive_service.dart';
-import 'package:hive/hive.dart';
+import 'package:hive_ce/hive_ce.dart';
 import 'dart:io';
 
 void main() {
