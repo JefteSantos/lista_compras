@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -11,8 +12,10 @@ import 'package:open_filex/open_filex.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:universal_html/html.dart' as html;
+
 import '../models/lista_compras.dart';
 import '../utils/app_utils.dart';
+import '../utils/list_summary.dart';
 
 class ExportService {
   static int _exportCounter = 0;
@@ -28,6 +31,7 @@ class ExportService {
 
     return 'NaoEsquece_Relatorio_${dateStr}_$_exportCounter.$extension';
   }
+
   static Future<void> exportToPdf(
     BuildContext context,
     List<ListaCompras> listas,
@@ -51,12 +55,17 @@ class ExportService {
             child: pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Text('Relatório de Compras',
-                    style: pw.TextStyle(
-                        fontSize: 24, fontWeight: pw.FontWeight.bold)),
-                pw.Text('Não Esquece!',
-                    style: pw.TextStyle(
-                        fontSize: 12, color: PdfColors.grey700)),
+                pw.Text(
+                  'Relatório de Compras',
+                  style: pw.TextStyle(
+                    fontSize: 24,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.Text(
+                  'Não Esquece!',
+                  style: pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
+                ),
               ],
             ),
           ),
@@ -74,6 +83,8 @@ class ExportService {
           ),
           build: (pw.Context context) {
             final List<pw.Widget> widgets = [];
+            final dateFormat = DateFormat('dd/MM/yyyy');
+            var totalGeral = 0.0;
 
             if (periodo != null) {
               widgets.add(
@@ -92,15 +103,18 @@ class ExportService {
 
             // Cada lista de compras
             for (var lista in listas) {
-              final valorAberto = lista.precoTotal - lista.precoComprado;
+              final summary = ListSummary.fromItems(lista.itens);
+              final valorAberto = summary.pendingTotal;
+              totalGeral += summary.total;
 
               widgets.add(
                 pw.Container(
                   margin: const pw.EdgeInsets.only(bottom: 10),
                   decoration: pw.BoxDecoration(
                     border: pw.Border.all(color: PdfColors.grey300),
-                    borderRadius:
-                        const pw.BorderRadius.all(pw.Radius.circular(5)),
+                    borderRadius: const pw.BorderRadius.all(
+                      pw.Radius.circular(5),
+                    ),
                   ),
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -114,11 +128,11 @@ class ExportService {
                           children: [
                             pw.Text(
                               lista.nome,
-                              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                              style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                              ),
                             ),
-                            pw.Text(
-                              DateFormat('dd/MM/yyyy').format(lista.dataCriacao),
-                            ),
+                            pw.Text(dateFormat.format(lista.dataCriacao)),
                           ],
                         ),
                       ),
@@ -129,11 +143,14 @@ class ExportService {
                           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                           children: [
                             pw.Text(
-                                'Total: ${AppUtils.formatMoney(lista.precoTotal)}'),
+                              'Total: ${AppUtils.formatMoney(summary.total)}',
+                            ),
                             pw.Text(
-                                'Pago: ${AppUtils.formatMoney(lista.precoComprado)}'),
+                              'Pago: ${AppUtils.formatMoney(summary.purchasedTotal)}',
+                            ),
                             pw.Text(
-                                'Aberto: ${AppUtils.formatMoney(valorAberto)}'),
+                              'Aberto: ${AppUtils.formatMoney(valorAberto)}',
+                            ),
                           ],
                         ),
                       ),
@@ -193,7 +210,7 @@ class ExportService {
                 mainAxisAlignment: pw.MainAxisAlignment.end,
                 children: [
                   pw.Text(
-                    'TOTAL GERAL: ${AppUtils.formatMoney(listas.fold(0.0, (sum, item) => sum + item.precoTotal))}',
+                    'TOTAL GERAL: ${AppUtils.formatMoney(totalGeral)}',
                     style: pw.TextStyle(
                       fontSize: 16,
                       fontWeight: pw.FontWeight.bold,
@@ -219,13 +236,11 @@ class ExportService {
         if (e.toString().contains('Out of Memory')) {
           errorMessage = 'Memória insuficiente ao gerar PDF (tente filtrar por um período menor).';
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(errorMessage)));
       }
     }
   }
-
 
   static Future<void> exportToCsv(
     BuildContext context,
@@ -249,15 +264,15 @@ class ExportService {
 
       rows.add(header);
 
+      final dateFormat = DateFormat('dd/MM/yyyy');
       for (var lista in listas) {
+        final summary = ListSummary.fromItems(lista.itens);
+        final dataCriacao = dateFormat.format(lista.dataCriacao);
+        final total = summary.total.toStringAsFixed(2);
+        final pago = summary.purchasedTotal.toStringAsFixed(2);
+        final aberto = summary.pendingTotal.toStringAsFixed(2);
         if (!includeItems || lista.itens.isEmpty) {
-          List<dynamic> row = [
-            DateFormat('dd/MM/yyyy').format(lista.dataCriacao),
-            lista.nome,
-            lista.precoTotal.toStringAsFixed(2),
-            lista.precoComprado.toStringAsFixed(2),
-            (lista.precoTotal - lista.precoComprado).toStringAsFixed(2),
-          ];
+          List<dynamic> row = [dataCriacao, lista.nome, total, pago, aberto];
 
           if (includeItems) {
             row.addAll(["-", "-", "-", "-"]);
@@ -267,11 +282,11 @@ class ExportService {
         } else {
           for (var item in lista.itens) {
             rows.add([
-              DateFormat('dd/MM/yyyy').format(lista.dataCriacao),
+              dataCriacao,
               lista.nome,
-              lista.precoTotal.toStringAsFixed(2),
-              lista.precoComprado.toStringAsFixed(2),
-              (lista.precoTotal - lista.precoComprado).toStringAsFixed(2),
+              total,
+              pago,
+              aberto,
               item.nome,
               AppUtils.formatQuantity(item.quantidade),
               item.preco?.toStringAsFixed(2) ?? "0.00",
@@ -317,9 +332,8 @@ class ExportService {
     } catch (e) {
       debugPrint('Erro ao exportar CSV: $e');
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Erro ao gerar CSV: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erro ao gerar CSV: $e')));
       }
     }
   }
@@ -353,14 +367,17 @@ class ExportService {
 
       sheet.appendRow(headers.map((e) => TextCellValue(e)).toList());
 
+      final dateFormat = DateFormat('dd/MM/yyyy');
       for (var lista in listas) {
+        final summary = ListSummary.fromItems(lista.itens);
+        final dataCriacao = dateFormat.format(lista.dataCriacao);
         if (!includeItems || lista.itens.isEmpty) {
           List<CellValue> row = [
-            TextCellValue(DateFormat('dd/MM/yyyy').format(lista.dataCriacao)),
+            TextCellValue(dataCriacao),
             TextCellValue(lista.nome),
-            DoubleCellValue(lista.precoTotal),
-            DoubleCellValue(lista.precoComprado),
-            DoubleCellValue(lista.precoTotal - lista.precoComprado),
+            DoubleCellValue(summary.total),
+            DoubleCellValue(summary.purchasedTotal),
+            DoubleCellValue(summary.pendingTotal),
           ];
 
           if (includeItems) {
@@ -376,11 +393,11 @@ class ExportService {
         } else {
           for (var item in lista.itens) {
             sheet.appendRow([
-              TextCellValue(DateFormat('dd/MM/yyyy').format(lista.dataCriacao)),
+              TextCellValue(dataCriacao),
               TextCellValue(lista.nome),
-              DoubleCellValue(lista.precoTotal),
-              DoubleCellValue(lista.precoComprado),
-              DoubleCellValue(lista.precoTotal - lista.precoComprado),
+              DoubleCellValue(summary.total),
+              DoubleCellValue(summary.purchasedTotal),
+              DoubleCellValue(summary.pendingTotal),
               TextCellValue(item.nome),
               DoubleCellValue(item.quantidade),
               DoubleCellValue(item.preco ?? 0),
@@ -425,9 +442,8 @@ class ExportService {
     } catch (e) {
       debugPrint('Erro ao exportar Excel: $e');
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Erro ao gerar Excel: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erro ao gerar Excel: $e')));
       }
     }
   }

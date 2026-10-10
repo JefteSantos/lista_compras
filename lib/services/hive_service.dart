@@ -1,4 +1,5 @@
 import 'package:hive_ce_flutter/hive_ce_flutter.dart';
+
 import '../models/item.dart';
 import '../models/lista_compras.dart';
 import '../models/preco_historico.dart';
@@ -25,7 +26,10 @@ class HiveService {
     Box<PrecoHistorico>? historicoBox,
     Box<CategoriaItem>? categoriasBox,
   }) async {
-    if (listaBox != null && itemBox != null && configBox != null && historicoBox != null) {
+    if (listaBox != null &&
+        itemBox != null &&
+        configBox != null &&
+        historicoBox != null) {
       _listaComprasBox = listaBox;
       _itemBox = itemBox;
       _configBox = configBox;
@@ -36,12 +40,25 @@ class HiveService {
 
     await Hive.initFlutter();
     Hive.registerAdapters();
-    
-    _listaComprasBox = await Hive.openBox<ListaCompras>(_listaComprasBoxName);
-    _itemBox = await Hive.openBox<Item>(_itemBoxName);
-    _configBox = await Hive.openBox(_configBoxName);
-    _historicoPrecosBox = await Hive.openBox<PrecoHistorico>(_historicoPrecosBoxName);
-    _categoriasBox = await Hive.openBox<CategoriaItem>(_categoriasBoxName);
+
+    // As caixas são independentes; suas leituras de disco podem se sobrepor.
+    await Future.wait([
+      Hive.openBox<ListaCompras>(_listaComprasBoxName).then((box) {
+        _listaComprasBox = box;
+      }),
+      Hive.openBox<Item>(_itemBoxName).then((box) {
+        _itemBox = box;
+      }),
+      Hive.openBox(_configBoxName).then((box) {
+        _configBox = box;
+      }),
+      Hive.openBox<PrecoHistorico>(_historicoPrecosBoxName).then((box) {
+        _historicoPrecosBox = box;
+      }),
+      Hive.openBox<CategoriaItem>(_categoriasBoxName).then((box) {
+        _categoriasBox = box;
+      }),
+    ]);
   }
 
   static Box<ListaCompras> get listaComprasBox {
@@ -73,6 +90,11 @@ class HiveService {
 
   static Future<void> salvarListaCompras(ListaCompras lista) async {
     await listaComprasBox.put(lista.id, lista);
+  }
+
+  static Future<void> salvarListasCompras(Iterable<ListaCompras> listas) async {
+    final porId = {for (final lista in listas) lista.id: lista};
+    if (porId.isNotEmpty) await listaComprasBox.putAll(porId);
   }
 
   static ListaCompras? obterListaCompras(String id) {
@@ -133,18 +155,22 @@ class HiveService {
   }
 
   static Future<void> limparTodosDados() async {
-    await listaComprasBox.clear();
-    await itemBox.clear();
-    await configBox.clear();
-    await _historicoPrecosBox?.clear();
+    await Future.wait([
+      listaComprasBox.clear(),
+      itemBox.clear(),
+      configBox.clear(),
+      if (_historicoPrecosBox != null) _historicoPrecosBox!.clear(),
+    ]);
   }
 
   static Future<void> fecharBoxes() async {
-    await _listaComprasBox?.close();
-    await _itemBox?.close();
-    await _configBox?.close();
-    await _historicoPrecosBox?.close();
-    await _categoriasBox?.close();
+    await Future.wait([
+      if (_listaComprasBox != null) _listaComprasBox!.close(),
+      if (_itemBox != null) _itemBox!.close(),
+      if (_configBox != null) _configBox!.close(),
+      if (_historicoPrecosBox != null) _historicoPrecosBox!.close(),
+      if (_categoriasBox != null) _categoriasBox!.close(),
+    ]);
   }
 
   static Box<CategoriaItem> get categoriasBox {
@@ -158,6 +184,8 @@ class HiveService {
 
   static int get totalListas => listaComprasBox.length;
   static int get totalItens => itemBox.length;
-  static int get listasAtivas => obterListasAtivas().length;
-  static int get listasFinalizadas => obterListasFinalizadas().length;
+  static int get listasAtivas =>
+      listaComprasBox.values.where((lista) => !lista.finalizada).length;
+  static int get listasFinalizadas =>
+      listaComprasBox.values.where((lista) => lista.finalizada).length;
 }

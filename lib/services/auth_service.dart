@@ -30,7 +30,8 @@ class AuthService {
 
   static final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
-  static bool _initialized = false;
+  static Future<void>? _initialization;
+  static Future<GoogleSignInAccount?>? _silentSignIn;
   static GoogleSignInAccount? _currentUser;
 
   static final StreamController<GoogleSignInAccount?> _userController =
@@ -39,12 +40,18 @@ class AuthService {
   /// Instância interna do GoogleSignIn, usada por outros serviços (ex: DriveBackupService).
   static GoogleSignIn get googleSignIn => _googleSignIn;
 
-  /// Deve ser chamado UMA ÚNICA VEZ, antes de qualquer outro método desta classe.
-  /// Ideal: no main(), antes do runApp(), ou no initState() do widget raiz.
-  static Future<void> initialize() async {
-    if (_initialized) return;
-    _initialized = true;
+  /// Compartilha a inicialização entre chamadas simultâneas e permite tentar
+  /// novamente caso o plugin falhe. Os métodos de login aguardam esta etapa.
+  static Future<void> initialize() {
+    return _initialization ??= _initialize().catchError(
+      (Object error, StackTrace stack) {
+        _initialization = null;
+        Error.throwWithStackTrace(error, stack);
+      },
+    );
+  }
 
+  static Future<void> _initialize() async {
     await _googleSignIn.initialize(
       clientId: kIsWeb ? _webClientId : null,
       serverClientId: kIsWeb ? null : _serverClientId,
@@ -54,14 +61,8 @@ class AuthService {
         .listen(_handleAuthenticationEvent)
         .onError((Object e) {
       debugPrint('Erro no stream de autenticação: $e');
-      _currentUser = null;
-      _userController.add(null);
+      _setCurrentUser(null);
     });
-
-    // Equivalente ao antigo signInSilently() automático: tenta restaurar
-    // a sessão de um usuário que já logou antes, sem exibir tela nenhuma
-    // (ou com uma interação mínima, dependendo da plataforma).
-    unawaited(_googleSignIn.attemptLightweightAuthentication());
   }
 
   static void _handleAuthenticationEvent(
@@ -71,6 +72,11 @@ class AuthService {
       GoogleSignInAuthenticationEventSignIn() => event.user,
       GoogleSignInAuthenticationEventSignOut() => null,
     };
+    _setCurrentUser(account);
+  }
+
+  static void _setCurrentUser(GoogleSignInAccount? account) {
+    if (_currentUser == account) return;
     _currentUser = account;
     _userController.add(account);
   }
@@ -79,12 +85,16 @@ class AuthService {
   /// Retorna null se o usuário cancelar.
   static Future<GoogleSignInAccount?> signIn() async {
     try {
+      await initialize();
+      // Não disputa com uma restauração de sessão iniciada na abertura.
+      await _silentSignIn;
       // Garante que qualquer sessão obsoleta/cache no Play Services seja limpa antes do login
       try {
         await _googleSignIn.signOut();
       } catch (_) {}
 
       final account = await _googleSignIn.authenticate();
+      _setCurrentUser(account);
       return account;
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled ||
@@ -112,9 +122,10 @@ class AuthService {
   /// Desloga o usuário atual.
   static Future<void> signOut() async {
     try {
+      await initialize();
+      await _silentSignIn;
       await _googleSignIn.signOut();
-      _currentUser = null;
-      _userController.add(null);
+      _setCurrentUser(null);
     } catch (e) {
       debugPrint('Erro ao sair: $e');
     }
@@ -122,12 +133,20 @@ class AuthService {
 
   /// Tenta renovar a sessão silenciosamente (sem tela de login, quando possível).
   /// Retorna null se o usuário não estiver logado.
-  static Future<GoogleSignInAccount?> signInSilently() async {
+  static Future<GoogleSignInAccount?> signInSilently() {
+    return _silentSignIn ??= _restoreSession().whenComplete(() {
+      _silentSignIn = null;
+    });
+  }
+
+  static Future<GoogleSignInAccount?> _restoreSession() async {
     try {
+      await initialize();
       final result = _googleSignIn.attemptLightweightAuthentication();
       // Em algumas plataformas (ex: web) o método pode não retornar um Future
       // e a resposta chega depois via `authenticationEvents`.
       final account = result != null ? await result : _currentUser;
+      _setCurrentUser(account);
       return account;
     } catch (e) {
       debugPrint('Erro ao renovar sessão: $e');

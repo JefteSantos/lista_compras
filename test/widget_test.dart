@@ -52,7 +52,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Minhas Listas'), findsOneWidget);
+      expect(find.text('Não Esquece!'), findsOneWidget);
     });
 
     testWidgets('deve exibir tabs Ativas e Histórico', (WidgetTester tester) async {
@@ -68,7 +68,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Ativas'), findsOneWidget);
-      expect(find.text('Histórico'), findsOneWidget);
+      expect(find.text('Finalizadas'), findsOneWidget);
     });
 
     testWidgets('deve exibir FAB para adicionar lista', (WidgetTester tester) async {

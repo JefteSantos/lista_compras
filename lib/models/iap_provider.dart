@@ -60,7 +60,7 @@ class IapProvider extends ChangeNotifier {
     if (_isPro) return;
     final novosUsos = ocrUsosCount + 1;
     await HiveService.salvarConfiguracao('free_ocr_usos', novosUsos);
-    notifyListeners();
+    _notifyIfActive();
   }
 
   /// Registra o uso do teste gratuito de exportação.
@@ -68,18 +68,24 @@ class IapProvider extends ChangeNotifier {
     if (_isPro) return;
     final novosUsos = exportUsosCount + 1;
     await HiveService.salvarConfiguracao('free_export_usos', novosUsos);
-    notifyListeners();
+    _notifyIfActive();
   }
 
   // ─── Internos ────────────────────────────────────────────────────────────
 
-  final InAppPurchase _iap = InAppPurchase.instance;
-  late StreamSubscription<List<PurchaseDetails>> _subscription;
+  final InAppPurchase _iap;
+  StreamSubscription<List<PurchaseDetails>>? _subscription;
+  bool _disposed = false;
+
+  void _notifyIfActive() {
+    if (!_disposed) notifyListeners();
+  }
 
   // ─── Inicialização ───────────────────────────────────────────────────────
 
-  IapProvider() {
-    _init();
+  IapProvider({InAppPurchase? purchases})
+      : _iap = purchases ?? InAppPurchase.instance {
+    unawaited(_init());
   }
 
   Future<void> _init() async {
@@ -89,37 +95,44 @@ class IapProvider extends ChangeNotifier {
     // 2. Na Web, não há loja — usamos apenas o cache local
     if (kIsWeb) {
       _isLoading = false;
-      notifyListeners();
+      _notifyIfActive();
       return;
     }
 
-    // 3. Assina o stream de compras ANTES de qualquer query
-    final Stream<List<PurchaseDetails>> purchaseUpdated = _iap.purchaseStream;
-    _subscription = purchaseUpdated.listen(
-      _onPurchaseUpdated,
-      onDone: () => _subscription.cancel(),
-      onError: (error) {
-        debugPrint('[IAP] Erro no purchaseStream: $error');
-      },
-    );
+    try {
+      // 3. Assina o stream de compras ANTES de qualquer query.
+      _subscription = _iap.purchaseStream.listen(
+        _onPurchaseUpdated,
+        onError: (Object error) {
+          debugPrint('[IAP] Erro no purchaseStream: $error');
+        },
+      );
 
-    // 4. Verifica se a loja está disponível
-    final bool available = await _iap.isAvailable();
-    if (!available) {
-      _erroLoja = 'Loja indisponível neste dispositivo.';
+      // 4. Verifica se a loja está disponível.
+      final bool available = await _iap.isAvailable();
+      if (_disposed) return;
+      if (!available) {
+        _erroLoja = 'Loja indisponível neste dispositivo.';
+        _isLoading = false;
+        _notifyIfActive();
+        return;
+      }
+
+      // 5. Carrega os detalhes do produto.
+      await _carregarProduto();
+    } catch (e) {
+      _erroLoja = 'Falha ao inicializar a loja: $e';
       _isLoading = false;
-      notifyListeners();
-      return;
+      _notifyIfActive();
+      debugPrint('[IAP] Erro ao inicializar: $e');
     }
-
-    // 5. Carrega os detalhes do produto
-    await _carregarProduto();
   }
 
   Future<void> _carregarProduto() async {
+    final estadoMudou = !_isLoading || _erroLoja != null;
     _isLoading = true;
     _erroLoja = null;
-    notifyListeners();
+    if (estadoMudou) _notifyIfActive();
 
     try {
       final ProductDetailsResponse response = await _iap.queryProductDetails(
@@ -151,7 +164,7 @@ class IapProvider extends ChangeNotifier {
     }
 
     _isLoading = false;
-    notifyListeners();
+    _notifyIfActive();
   }
 
   // ─── Comprar PRO ─────────────────────────────────────────────────────────
@@ -160,7 +173,7 @@ class IapProvider extends ChangeNotifier {
   Future<bool> comprarPro() async {
     if (_produtoDetails == null) {
       _erroLoja = 'Produto não disponível. Tente novamente mais tarde.';
-      notifyListeners();
+      _notifyIfActive();
       return false;
     }
 
@@ -174,12 +187,12 @@ class IapProvider extends ChangeNotifier {
       );
       if (!started) {
         _erroLoja = 'Não foi possível iniciar a compra.';
-        notifyListeners();
+        _notifyIfActive();
       }
       return started;
     } catch (e) {
       _erroLoja = 'Erro ao iniciar compra: $e';
-      notifyListeners();
+      _notifyIfActive();
       debugPrint('[IAP] Erro em comprarPro: $e');
       return false;
     }
@@ -193,7 +206,7 @@ class IapProvider extends ChangeNotifier {
       await _iap.restorePurchases();
     } catch (e) {
       _erroLoja = 'Erro ao restaurar compras: $e';
-      notifyListeners();
+      _notifyIfActive();
       debugPrint('[IAP] Erro em restaurarCompras: $e');
     }
   }
@@ -207,7 +220,7 @@ class IapProvider extends ChangeNotifier {
       switch (purchase.status) {
         case PurchaseStatus.pending:
           _compraPendente = true;
-          notifyListeners();
+          _notifyIfActive();
           break;
 
         case PurchaseStatus.purchased:
@@ -218,7 +231,7 @@ class IapProvider extends ChangeNotifier {
         case PurchaseStatus.error:
           _compraPendente = false;
           _erroLoja = purchase.error?.message ?? 'Erro desconhecido na compra.';
-          notifyListeners();
+          _notifyIfActive();
           debugPrint('[IAP] Erro de compra: ${purchase.error}');
           // Sempre completar a transação, mesmo em erro
           if (purchase.pendingCompletePurchase) {
@@ -228,7 +241,7 @@ class IapProvider extends ChangeNotifier {
 
         case PurchaseStatus.canceled:
           _compraPendente = false;
-          notifyListeners();
+          _notifyIfActive();
           // Sempre completar a transação
           if (purchase.pendingCompletePurchase) {
             _iap.completePurchase(purchase);
@@ -247,7 +260,7 @@ class IapProvider extends ChangeNotifier {
     // Persiste no Hive como cache
     await HiveService.salvarConfiguracao('usuario_pro', true);
 
-    notifyListeners();
+    _notifyIfActive();
 
     // IMPORTANTE: Sempre completar a transação para evitar reembolso automático
     if (purchase.pendingCompletePurchase) {
@@ -261,9 +274,8 @@ class IapProvider extends ChangeNotifier {
 
   @override
   void dispose() {
-    if (!kIsWeb) {
-      _subscription.cancel();
-    }
+    _disposed = true;
+    unawaited(_subscription?.cancel());
     super.dispose();
   }
 }

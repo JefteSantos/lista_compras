@@ -454,6 +454,7 @@ class _ReportScreenState extends State<ReportScreen> {
                 ),
                 Text(
                   AppUtils.formatMoney(total),
+                  key: const ValueKey('report-grand-total'),
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 18,
