@@ -73,3 +73,21 @@ Prefere telas escuras? Ative o modo noturno nas configurações.
 - **E-mail de contato**: (preencher com e-mail da empresa)
 - **Classificação**: Livre para todas as idades
 - **Anúncios**: Não contém anúncios
+
+---
+
+## Notas de Versão — v1.4.63 (Build 63)
+
+> Cole no campo **"Novidades desta versão"** do Google Play Console (máx. 500 caracteres).
+
+```
+O que há de novo na versão 1.4.63:
+
+✨ Arraste e solte: Reorganize os itens da lista facilmente com gesto de arrastar.
+🛡️ Confirmações: Modal de segurança para evitar exclusões acidentais.
+🌙 Modo Escuro aprimorado: Maior contraste em todas as telas.
+⚡ Mais fluidez: Otimizações de desempenho e carregamento.
+🎨 Novo ícone oficial em alta definição.
+```
+
+(~370 caracteres)
