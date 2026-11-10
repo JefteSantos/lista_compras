@@ -548,20 +548,40 @@ class _EditItemScreenState extends State<EditItemScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: isDark ? const Color(0xFF1E1E1E) : Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
+                      color: isDark ? Colors.purpleAccent.withValues(alpha: 0.3) : Colors.grey.shade300,
+                      width: isDark ? 1.5 : 1.0,
                     ),
+                    boxShadow: isDark
+                        ? [
+                            BoxShadow(
+                              color: Colors.purpleAccent.withValues(alpha: 0.05),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                        : null,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Preview:',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white70 : Colors.black87,
-                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.remove_red_eye_outlined,
+                            size: 16,
+                            color: isDark ? Colors.purpleAccent.shade100 : Colors.deepPurple,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Preview:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.purpleAccent.shade100 : Colors.deepPurple,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 8),
                       Row(

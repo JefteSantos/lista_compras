@@ -363,13 +363,18 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                       )
                     : _agruparPorCategoria
                         ? _buildGroupedList(itensOrdenados, provider, lista)
-                        : ListView.separated(
+                        : ReorderableListView.builder(
                             padding: const EdgeInsets.only(bottom: 100),
-                            itemCount: itensOrdenados.length,
-                            separatorBuilder: (_, i) => const Divider(height: 1),
+                            itemCount: lista.itens.length,
+                            onReorder: (oldIndex, newIndex) async {
+                              if (newIndex > oldIndex) newIndex -= 1;
+                              final item = lista.itens.removeAt(oldIndex);
+                              lista.itens.insert(newIndex, item);
+                              await provider.atualizarLista(lista);
+                            },
                             itemBuilder: (context, index) {
-                              final item = itensOrdenados[index];
-                              return _buildItemTile(context, provider, lista, item);
+                              final item = lista.itens[index];
+                              return _buildItemTile(context, provider, lista, item, index: index);
                             },
                           ),
               ),
@@ -401,12 +406,21 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                         lista.reabrirLista();
                         await provider.atualizarLista(lista);
                       } else {
-                        // Finalizar: usa o método do provider que também
-                        // salva o histórico de preços dos itens comprados
-                        await provider.finalizarLista(lista);
-                      }
-                      if (context.mounted) {
-                        Navigator.pop(context);
+                        // Confirmação para finalizar compra
+                        final confirmed = await showGenericConfirmationDialog(
+                          context,
+                          title: 'Finalizar Lista?',
+                          content: 'Deseja finalizar a compra da lista "${lista.nome}"?\nOs preços dos itens comprados serão salvos no histórico.',
+                          confirmText: 'Finalizar',
+                          cancelText: 'Cancelar',
+                          confirmColor: Colors.green,
+                        );
+                        if (confirmed && context.mounted) {
+                          await provider.finalizarLista(lista);
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                          }
+                        }
                       }
                     },
                     icon: Icon(lista.finalizada ? Icons.replay : Icons.check),
@@ -488,8 +502,9 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
     BuildContext context,
     ListasProvider provider,
     ListaCompras lista,
-    Item item,
-  ) {
+    Item item, {
+    int? index,
+  }) {
     return Dismissible(
       key: Key(item.id),
       direction: DismissDirection.endToStart,
@@ -511,6 +526,7 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
         provider.removerItem(lista, item);
       },
       child: ListTile(
+        key: ValueKey(item.id),
         leading: Checkbox(
           value: item.comprado,
           onChanged: (val) {
@@ -565,8 +581,11 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
               ),
           ],
         ),
-        trailing: item.precoTotal > 0
-            ? Text(
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (item.precoTotal > 0)
+              Text(
                 AppUtils.formatMoney(item.precoTotal),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -574,8 +593,21 @@ class _ListDetailScreenState extends State<ListDetailScreen> {
                       ? Colors.grey
                       : Theme.of(context).textTheme.bodyLarge?.color,
                 ),
-              )
-            : null,
+              ),
+            if (index != null && !_agruparPorCategoria) ...[
+              const SizedBox(width: 8),
+              ReorderableDragStartListener(
+                index: index,
+                child: Icon(
+                  Icons.drag_handle,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.grey.shade500
+                      : Colors.grey.shade400,
+                ),
+              ),
+            ],
+          ],
+        ),
         onTap: () => _adicionarOuEditarItem(context, lista, item: item),
       ),
     );
